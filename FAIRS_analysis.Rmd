@@ -69,29 +69,48 @@ data <- data %>% arrange(group)
 data$id <- rep( seq(1, nrow(data)/nObsType) , each=nObsType)
 
 
-label_data$x <- as.factor(paste0(label_data$group,"_",label_data$item))
-nblock <-nrow(label_data)/ngroup
-blankrow<-label_data[1,]
 
+nblock <-nrow(label_data)/ngroup
+
+
+#now insert blank rows between groups: this is fiddly!
 range1<-1:nblock
 range2<-nblock+(1:nblock)
 range3<-nblock+range2
-plotdata<-rbind(label_data[range1,],label_data[1,],label_data[range2,],label_data[1,],label_data[range3,],label_data[1,])
-myrows<-c(range2[1],range3[1],nrow(plotdata))
+plotdata<-rbind(label_data[range1,],label_data[1,])
+plotdata<-rbind(plotdata,label_data[range2,],label_data[1,])
+plotdata<-rbind(plotdata,label_data[range3,],label_data[1,])
+myrows<-c(range2[1],(1+range3[1]),nrow(plotdata))
 for (k in myrows){
  for (j in 1:ncol(plotdata)){
-  
   plotdata[k,j]<-NA
   }
 }
+plotdata$tot[myrows]<-0
+plotdata$group[myrows]<-unique(plotdata$group)
+plotdata$response[myrows]<-1
+plotdata$item[myrows]<-'_'
+plotdata$x <- as.factor(paste0(plotdata$group,"_",plotdata$item))
+#x is variable denoting both group and item
 
-p <- ggplot(label_data) +      
+p <- ggplot(plotdata) +      
   
   # Add the stacked bar
   geom_bar(aes(x=x, y=tot, fill=as.factor(response)), stat="identity", alpha=0.5) +
   scale_fill_viridis(discrete=TRUE) +
+   theme_minimal() +
+  theme(
+    legend.position = "none",
+    axis.text = element_blank(),
+    axis.title = element_blank(),
+    panel.grid = element_blank(),
+    plot.margin = unit(rep(-1,4), "cm") 
+  )+
   coord_polar()
 
+
+  # Add labels on top of each bar
+  geom_text(data=label_data, aes(x=id, y=tot+10, label=individual, hjust=hjust), color="black", fontface="bold",alpha=0.6, size=5, angle= label_data$angle, inherit.aes = FALSE ) +
 
   
   # Add a val=100/75/50/25 lines. I do it at the beginning to make sur barplots are OVER it.
@@ -101,16 +120,7 @@ p <- ggplot(label_data) +
   geom_segment(data=grid_data, aes(x = end, y = 150, xend = start, yend = 150), colour = "grey", alpha=1, size=0.3 , inherit.aes = FALSE ) +
   geom_segment(data=grid_data, aes(x = end, y = 200, xend = start, yend = 200), colour = "grey", alpha=1, size=0.3 , inherit.aes = FALSE )+
   
-   theme_minimal() +
-  theme(
-    legend.position = "none",
-    axis.text = element_blank(),
-    axis.title = element_blank(),
-    panel.grid = element_blank(),
-    plot.margin = unit(rep(-1,4), "cm") 
-  ) +
-  coord_polar()
-}
+  
 
 ```
 

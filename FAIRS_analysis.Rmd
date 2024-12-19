@@ -106,11 +106,19 @@ p <- ggplot(plotdata) +
     panel.grid = element_blank(),
     plot.margin = unit(rep(-1,4), "cm") 
   )+
-  coord_polar()
+  #crucial to position annotations before convert to polar
+annotate("text",label="Group 1",x=3,y = 80)+
+annotate("text",label="Group 2",x=7,y = 80)+
+annotate("text",label="Group 3",x=11,y = 80)+
+    # Add labels on top of each bar
+ geom_text(data=label_data, aes(x=x, y=-5, label=item), color="black",size=3) +
+  coord_polar()+
+ylim(-20,100)
+  
 
 
-  # Add labels on top of each bar
-  geom_text(data=label_data, aes(x=id, y=tot+10, label=individual, hjust=hjust), color="black", fontface="bold",alpha=0.6, size=5, angle= label_data$angle, inherit.aes = FALSE ) +
+
+
 
   
   # Add a val=100/75/50/25 lines. I do it at the beginning to make sur barplots are OVER it.

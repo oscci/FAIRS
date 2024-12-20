@@ -11,6 +11,7 @@ require(tidyverse)
 require(viridis)
 require(here)
 require(janitor)
+
 ```
 
 ## Summary of FAIRS Survey, round 1
@@ -197,7 +198,7 @@ xxx panelists signed up to take part in the survey, and completed surveys were r
 For each item in the survey, we show the number of people selecting each response type, prorated to give equal group sizes. Free text comments are also shown. 
 
 ## Priorities  
-*Item 1*.  
+### Item 1    
 Which of these should be a primary focus for discussion? (1 for low priority, 3 for high priority). Try to avoid selecting the same response for all options, so that we can identify their relative importance.   
 - A. What constitutes serious research misconduct?			 
 - B. How allegations of serious research misconduct are handled			
@@ -211,7 +212,7 @@ Which of these should be a primary focus for discussion? (1 for low priority, 3 
 `r mytext <- df$x5_1b_opt; gatherfree(mytext)`
 
 ## Burdens of serious research misconduct 
-*Item 2*.     
+### Item 2       
 How common is the problem of serious research misconduct? (select one)  
 
 - A. Serious research misconduct is rare relative to the amount of published research literature 
@@ -223,7 +224,7 @@ How common is the problem of serious research misconduct? (select one)
 
 `r mytext <- df$x7_2b_opt; gatherfree(mytext)`   
 
-*Item 3*.   
+### Item 3    
 How harmful are the impacts of serious research misconduct to different segments of society? Please code as 1 (low harm) to 5 (strong harm)  
 
 - A. Consumers of research findings, e.g. patients whose treatment is informed by medical research or policy-makers who depend on research findings					 
@@ -239,7 +240,7 @@ How harmful are the impacts of serious research misconduct to different segments
 `r mytext <- df$x9_3b_opt; gatherfree(mytext)`   
 
 ## Goals of those responding to serious research misconduct 
-*Item 4*.   
+### Item 4    
 In responding to serious research misconduct, several goals may be considered. 
 Please rate how important each of these is, from 1 (unimportant) to 4 (very important) 
 
@@ -254,7 +255,7 @@ Please rate how important each of these is, from 1 (unimportant) to 4 (very impo
 `r mytext <- df$x11_4b_op; gatherfree(mytext)`   
 
 ## Factors hindering academic institutions' response to serious research misconduct 
-*Item 5*.   
+### Item 5   
 Various factors may hinder academic institutions' response to serious research 
 misconduct. Please rate the following from 1 (not much of a hindrance) to 5 (substantial hindrance) 
 
@@ -274,7 +275,7 @@ misconduct. Please rate the following from 1 (not much of a hindrance) to 5 (sub
 `r mytext <- df$x13_5b_op; gatherfree(mytext)` 	 
 
 ## Factors driving serious research misconduct 
-**Item 6**   
+### Item 6   
 What is the impact of these factors in encouraging researchers to commit serious research misconduct? 
 Please rate from 1 (little impact) to 5 (large impact) 
 
@@ -289,7 +290,7 @@ Please rate from 1 (little impact) to 5 (large impact)
 `r mytext <- df$x15_6b_op; gatherfree(mytext)`  
 
 ## Role of social media   
-**Item 7**   
+### Item 7  
 On balance, the role of social media in detecting and reporting serious research 
 misconduct has been: (select one)  
 - A. 	predominantly negative - it makes it too easy for vexatious individuals to raise unwarranted complaints, often under the guise of anonymity   
@@ -303,7 +304,7 @@ misconduct has been: (select one)
 `r mytext <- df$x17_7b_op; gatherfree(mytext)`  
 
 ## Reporting serious research misconduct   
-**Item 8**   
+### Item 8   
 Official channels for reporting misconduct are often slow and obstructive (select one option).   
 - A. Strongly agree  
 - B. Moderately agree  
@@ -318,7 +319,7 @@ Official channels for reporting misconduct are often slow and obstructive (selec
 `r mytext <- df$x19_8b_op; gatherfree(mytext)`  
 
 ## Models for addressing serious research misconduct 
-**Item 9**   
+### Item 9  
 In an ideal world where resources are not an issue, which is the most suitable model/system for addressing serious research misconduct? 
 
 - A. Self-regulation approach, where academic institutions are responsible for conducting investigations and 
@@ -334,7 +335,7 @@ regulatory role, but aims to ensure all institutions work to a common framework
 `r mytext <- df$x21_9b_op; gatherfree(mytext)` 
 
 ## Role of employers
-**Item 10**  
+### Item 10  
 Prospective employers should undertake rigorous due diligence and, as far as
 possible, check with previous employers to ask if there have been any investigations into serious research misconduct. 
 - A. Agree
@@ -347,7 +348,7 @@ possible, check with previous employers to ask if there have been any investigat
 
 `r mytext <- df$x23_10b_o; gatherfree(mytext)` 
 
-**Item 11** 
+### Item 11  
 Employers, funders and publishers of research should be legally required to share information to support investigations of serious research misconduct.
 - A. Agree
 - B. Neutral
@@ -360,7 +361,7 @@ Employers, funders and publishers of research should be legally required to shar
 `r mytext <- df$x25_11b_o; gatherfree(mytext)` 
 
 ## Solutions to serious research misconduct
-**Item 12**
+### Item 12  
 Given that we have finite resources, which solutions to serious research misconduct should be prioritised in funding?
 Rate the following options from 1 = most preferred, to 5 = least preferred 
 
@@ -376,7 +377,7 @@ Rate the following options from 1 = most preferred, to 5 = least preferred
 `r mytext <- df$x27_12b_o; gatherfree(mytext)`  
 
 ## Role of publishers  
-**Item 13**  
+### Item 13 
 It is not the responsibility of publishers or journal editors to determine whether serious research misconduct has occurred, but they are responsible for ensuring the literature is decontaminated from erroneous work promptly. Please rate the following statements in accordance with your views on how this should work, from 1 = strongly disagree to 5 = strongly agree. 
 
 - A. Articles that contain serious errors that undermine confidence in the findings should be retracted promptly, without waiting for an institutional investigation  
@@ -392,7 +393,7 @@ It is not the responsibility of publishers or journal editors to determine wheth
 `r mytext <- df$x29_13b_o; gatherfree(mytext)`  
 
 ## Whistleblowers and bystanders  
-**Item 14**  
+### Item 14  
 Please rate your agreement with the following statements about whistleblowers from 1 = strongly disagree to 5 = strongly agree  
 
 - A. There are disincentives for researchers to report serious research misconduct					
@@ -405,7 +406,7 @@ Please rate your agreement with the following statements about whistleblowers fr
 `r mytext <- df$x31_14b_o; gatherfree(mytext)`  
 
 ## When serious research misconduct is confirmed  
-**Item 15**  
+### Item 15  
 Which of these practices should be options for institutions when serious research misconduct is confirmed.
 Please give your rating from 1 = strongly disagree to 5 = strongly agree.*
   
@@ -419,14 +420,14 @@ Please give your rating from 1 = strongly disagree to 5 = strongly agree.*
 `r mytext <- df$x33_15b_o; gatherfree(mytext)`
 
 ## Unintended consequences/barriers to progress  
-**Item 16**  
+### Item 16  
 Please rate your agreement with the following statements about unintended consequences/barriers to progress from 1 = strongly disagree to 5 = strongly agree  
 
 ![](plot_jiscitem_16.png) 
 **Free text comments on item 16** 
 `r mytext <- df$x35_16b_o; gatherfree(mytext)`  
 
-**Item 17**  
+### Item 17  
 "One of the likely drivers of trust and distrust in research is the way research institutes, publishers, and funders respond to allegations of research misconduct" (Bouter, 2024)   
 - A. Agree  
 - B. Neutral  

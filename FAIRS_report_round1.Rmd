@@ -333,4 +333,112 @@ regulatory role, but aims to ensure all institutions work to a common framework
 
 `r mytext <- df$x21_9b_op; gatherfree(mytext)` 
 
+## Role of employers
+**Item 10**  
+Prospective employers should undertake rigorous due diligence and, as far as
+possible, check with previous employers to ask if there have been any investigations into serious research misconduct. 
+- A. Agree
+- B. Neutral
+- C. Disagree
+
+`r maketab(myjisc,10,df)`  
+
+**Free text comments on item 10**   
+
+`r mytext <- df$x23_10b_o; gatherfree(mytext)` 
+
+**Item 11** 
+Employers, funders and publishers of research should be legally required to share information to support investigations of serious research misconduct.
+- A. Agree
+- B. Neutral
+- C. Disagree
+
+`r maketab(myjisc,11,df)`  
+
+**Free text comments on item 11**   
+
+`r mytext <- df$x25_11b_o; gatherfree(mytext)` 
+
+## Solutions to serious research misconduct
+**Item 12**
+Given that we have finite resources, which solutions to serious research misconduct should be prioritised in funding?
+Rate the following options from 1 = most preferred, to 5 = least preferred 
+
+- A. Changing criteria for hiring/promotion/funding away from publish/perish model, so that researchers won't be motivated to commit fraud  
+- B. Research ethics training for all researchers  
+- C. Funding/training of research integrity officers  
+- D. Infrastructure to collect and report on serious research misconduct nationally  
+- E. Support for individuals/organisations who have expertise in detection of serious research misconduct  
+
+![](plot_jiscitem_12.png)   
+**Free text comments on item 12**   
+
+`r mytext <- df$x27_12b_o; gatherfree(mytext)`  
+
+## Role of publishers  
+**Item 13**  
+It is not the responsibility of publishers or journal editors to determine whether serious research misconduct has occurred, but they are responsible for ensuring the literature is decontaminated from erroneous work promptly. Please rate the following statements in accordance with your views on how this should work, from 1 = strongly disagree to 5 = strongly agree. 
+
+- A. Articles that contain serious errors that undermine confidence in the findings should be retracted promptly, without waiting for an institutional investigation  
+- B. Publishers and institutions should work together to facilitate sharing of key information when serious research misconduct is suspected  
+- C. If conditions for retraction are not met, an expression of concern may be added to an article while an institution conducts an investigation  
+- D. When an institutional investigation is completed, the institution should directly approach the publisher of articles affected by severe research misconduct and request retraction  
+- E. When a publisher finds the same author repeatedly flagged for erroneous material, they should communicate this to research integrity officer at the author's institution  
+- F. When a publisher or institution finds the same researcher repeatedly flagged for erroneous material, their name should be added to a database. (NB. If there is sufficient endorsement of this statement, there would need to be discussion of how this works in terms of legal, practical and ethical aspects.)  
+
+![](plot_jiscitem_13.png)  
+**Free text comments on item 13**   
+
+`r mytext <- df$x29_13b_o; gatherfree(mytext)`  
+
+## Whistleblowers and bystanders  
+**Item 14**  
+Please rate your agreement with the following statements about whistleblowers from 1 = strongly disagree to 5 = strongly agree  
+
+- A. There are disincentives for researchers to report serious research misconduct					
+- B. Usually there is insufficient protection for whistleblowers who report serious research misconduct					
+- C. It is important to be aware of and mitigate collateral damage that may be caused to other members of a research group if one member is found to have committed serious research misconduct					
+- D. Whistleblowers should have their identities protected, with confidential channels for reporting suspected serious research misconduct					
+
+![](plot_jiscitem_14.png)  
+**Free text comments on item 14** 
+`r mytext <- df$x31_14b_o; gatherfree(mytext)`  
+
+## When serious research misconduct is confirmed  
+**Item 15**  
+Which of these practices should be options for institutions when serious research misconduct is confirmed.
+Please give your rating from 1 = strongly disagree to 5 = strongly agree.*
+  
+- A. Educational retraining for researchers who have been found to commit serious research misconduct  
+- B. Restorative justice approaches; e.g. requirement to meet those affected by the misconduct to discuss its impact  
+- C. Sanctions such as demotion or dismissal  
+- D. Report on the investigation made public, with identities of those found to have committed serious research misconduct disclosed  
+
+![](plot_jiscitem_15.png)  
+**Free text comments on item 15** 
+`r mytext <- df$x33_15b_o; gatherfree(mytext)`
+
+## Unintended consequences/barriers to progress  
+**Item 16**  
+Please rate your agreement with the following statements about unintended consequences/barriers to progress from 1 = strongly disagree to 5 = strongly agree  
+
+![](plot_jiscitem_16.png) 
+**Free text comments on item 16** 
+`r mytext <- df$x35_16b_o; gatherfree(mytext)`  
+
+**Item 17**  
+"One of the likely drivers of trust and distrust in research is the way research institutes, publishers, and funders respond to allegations of research misconduct" (Bouter, 2024)   
+- A. Agree  
+- B. Neutral  
+- C. Disagree   
+
+
+`r maketab(myjisc,17,df)`  
+
+**Free text comments on item 17** 
+`r mytext <- df$x35_17b_o; gatherfree(mytext)`  
+
+## Final thoughts   
+**Free text comments: final thoughts**  
+`r mytext <- df$x38_any_oth; gatherfree(mytext)`  
 

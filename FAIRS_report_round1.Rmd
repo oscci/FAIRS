@@ -72,7 +72,7 @@ gatherfree <- function(mytext){
 #Used code from https://bookdown.org/content/b298e479-b1ab-49fa-b83d-a57c2b034d49/part.html#circular-stacked-barchart  
 #Now just regular barplot
 
-doround <- function(data,nopt,nitem){
+doround <- function(data,nopt,nitem,df){
   empty_bar <- 2
   nObsType <- nlevels(as.factor(data$response))
   to_add <- data.frame( matrix(NA, empty_bar*nlevels(data$group)*nObsType, ncol(data)) )
@@ -108,6 +108,16 @@ doround <- function(data,nopt,nitem){
   label_data$x<-as.factor(paste0(label_data$group,"_",label_data$item))
   #x is variable denoting conjunction of group and item
   
+  # create percentage from count
+allsum <- aggregate(plotdata$count,by=list(plotdata$x),FUN=sum)
+allsum<-allsum[order(allsum$x),]
+plotdata$perc<-0
+for (ii in 1:nrow(plotdata)){
+  w<-which(allsum$Group.1==plotdata$x[ii])
+  plotdata$perc[ii] <-100*plotdata$count[ii]/allsum$x[w]
+}
+    
+    
   plotdata$response<-as.factor(plotdata$response)
   
   #Plotting starts here. 
@@ -116,7 +126,7 @@ doround <- function(data,nopt,nitem){
     
     # Add the stacked bar
     
-    geom_bar(aes(x=x, y=count, fill=response), stat="identity", alpha=0.5) +
+    geom_bar(aes(x=x, y=perc, fill=response), stat="identity", alpha=0.5) +
     scale_fill_viridis(discrete=TRUE) +
     theme_bw() +
     theme(
@@ -129,9 +139,9 @@ doround <- function(data,nopt,nitem){
       #plot.margin = unit(rep(-1,4), "cm") 
     )+
     #crucial to position annotations before convert to polar
-    annotate("text",label="Group 1",x=(endx*.6),y = 36)+
-    annotate("text",label="Group 2",x=(endx+(endx*.6)),y = 36)+
-    annotate("text",label="Group 3",x=(2*endx+(endx*.6)),y = 36)+
+    annotate("text",label="Group 1",x=(endx*.6),y = 106)+
+    annotate("text",label="Group 2",x=(endx+(endx*.6)),y = 106)+
+    annotate("text",label="Group 3",x=(2*endx+(endx*.6)),y = 106)+
     # Add labels on top of each bar - again - do this before polar step
     geom_text(data=label_data, aes(x=x, y=-5, label=item), color="black",size=4) 
   
@@ -142,10 +152,11 @@ doround <- function(data,nopt,nitem){
   return()
 }
 
+
 ```
 
 ```{r makeplots, echo=F}
-makeplots <- function(myjisc,jisccodes){
+
 njisc<-nrow(myjisc)
 for (i in 1:njisc){
   nopt <- myjisc$N.options[i]
@@ -157,11 +168,11 @@ for (i in 1:njisc){
     datax <- df[,c(2,3,w)]
     names(datax)[3:ncol(datax)]<-LETTERS[1:nopt]
     data <- datax %>% gather(key = "item", value="response", -c(1,2)) #long form for this item
-    nitem<-1
-    p<-doround(data,nopt,nitem = ) #call plotting function
+    
+    p<-doround(data,nopt,nitem, df ) #call plotting function
   }
 }
-}
+
 ```
 
 ```{r maketab, echo=F} 
@@ -170,13 +181,11 @@ maketab <- function(myjisc,itemnum,df){
   jisccodes <- seq(4,36,2) #X Codes in JISC file corresponding to items
     itemcode<-paste0('x',jisccodes[itemnum],'_')
     w<- grep(itemcode,names(df))
-
-    mytab <- aggregate(df[,w],by=list(df$group,df[,w]),FUN=length,drop=FALSE)
     mytab <- table(df[,w],df$group)
     myt <- as.data.frame.matrix(mytab)
     names(myt)<-c('Group1','Group2','Group3')
     ww<-which(names(myjisc)=='introtext')
-    rownames(myt)<-myjisc[itemnum,(ww+1):(ww+myjisc$hirange[i])]
+    rownames(myt)<-myjisc[itemnum,(ww+1):(ww+myjisc$hirange[itemnum])]
     knitr::kable(myt)
 }
 ```
@@ -201,128 +210,127 @@ Which of these should be a primary focus for discussion? (1 for low priority, 3 
 **Free text comments on item 1**  
 `r mytext <- df$x5_1b_opt; gatherfree(mytext)`
 
-## Burdens of serious research misconduct
-*Item 2*.    
-How common is the problem of serious research misconduct? (select one) 
+## Burdens of serious research misconduct 
+*Item 2*.     
+How common is the problem of serious research misconduct? (select one)  
 
-- A. Serious research misconduct is rare relative to the amount of published research literature
-- B. Serious research misconduct is becoming more prevalent and starting to pose a threat to the research literature
-- C. Serious research misconduct is already common enough to pose a major threat to the research literature
-  
-`r maketab(myjisc,2,df)`  
-**Free text comments on item 2**   
+- A. Serious research misconduct is rare relative to the amount of published research literature 
+- B. Serious research misconduct is becoming more prevalent and starting to pose a threat to the research literature 
+- C. Serious research misconduct is already common enough to pose a major threat to the research literature 
 
-`r mytext <- df$x7_2b_opt; gatherfree(mytext)`  
+`r maketab(myjisc,2,df)`   
+**Free text comments on item 2**    
 
-*Item 3*.  
-How harmful are the impacts of serious research misconduct to different segments of society? Please code as 1 (low harm) to 5 (strong harm) 
+`r mytext <- df$x7_2b_opt; gatherfree(mytext)`   
 
-- A. Consumers of research findings, e.g. patients whose treatment is informed by medical research or policy-makers who depend on research findings					
-- B. Other researchers who try to build on fraudulent findings
-- C. Funders, whose funds are wasted
-- D. Institutions, whose resources are diverted to tackling misconduct
-- E. Society, when public trust in research is eroded
-					
-![](plot_jiscitem_3.png)  
- 
-**Free text comments on item 3**   
+*Item 3*.   
+How harmful are the impacts of serious research misconduct to different segments of society? Please code as 1 (low harm) to 5 (strong harm)  
 
-`r mytext <- df$x9_3b_opt; gatherfree(mytext)`  
+- A. Consumers of research findings, e.g. patients whose treatment is informed by medical research or policy-makers who depend on research findings					 
+- B. Other researchers who try to build on fraudulent findings 
+- C. Funders, whose funds are wasted 
+- D. Institutions, whose resources are diverted to tackling misconduct 
+- E. Society, when public trust in research is eroded 
 
-## Goals of those responding to serious research misconduct
-*Item 4*.  
-In responding to serious research misconduct, several goals may be considered.
-Please rate how important each of these is, from 1 (unimportant) to 4 (very important)
+![](plot_jiscitem_3.png)   
 
-- A. To maintain academic integrity, including to correct the academic record		 		
-- B. To punish offenders  
-- C. To deter others from committing fraud  
-- D. To maintain trust and rigour in research  
+**Free text comments on item 3**    
 
-![](plot_jiscitem_4.png)  
-**Free text comments on item 4**   
+`r mytext <- df$x9_3b_opt; gatherfree(mytext)`   
 
-`r mytext <- df$x11_4b_opt; gatherfree(mytext)`  
+## Goals of those responding to serious research misconduct 
+*Item 4*.   
+In responding to serious research misconduct, several goals may be considered. 
+Please rate how important each of these is, from 1 (unimportant) to 4 (very important) 
 
-## Factors hindering academic institutions' response to serious research misconduct
-*Item 5*.  
-Various factors may hinder academic institutions' response to serious research
-misconduct. Please rate the following from 1 (not much of a hindrance) to 5 (substantial hindrance)
+- A. To maintain academic integrity, including to correct the academic record		 		 
+- B. To punish offenders   
+- C. To deter others from committing fraud   
+- D. To maintain trust and rigour in research   
 
-- A.Lack of co-ordination between relevant research actors, such as institutions, funders and publishers		- B. Conflict of interest for institutions investigating their own researchers					
-- C. Lack of resources					
-- D. Lack of expertise					
-- E. Concern about legal repercussions					
-- F. Large number of vexatious/trivial accusations of misconduct					
-- G. Bureaucratic delays or inefficiencies in the investigation process					
-- H. Complexity of cases					
-- I. Due process concerns to ensure fairness to all involved in the case					
+![](plot_jiscitem_4.png)   
+**Free text comments on item 4**    
 
-![](plot_jiscitem_5.png)  
-**Free text comments on item 5**   
+`r mytext <- df$x11_4b_op; gatherfree(mytext)`   
 
-`r mytext <- df$x13_5b_opt; gatherfree(mytext)` 	
+## Factors hindering academic institutions' response to serious research misconduct 
+*Item 5*.   
+Various factors may hinder academic institutions' response to serious research 
+misconduct. Please rate the following from 1 (not much of a hindrance) to 5 (substantial hindrance) 
 
-## Factors driving serious research misconduct
-**Item 6**
-What is the impact of these factors in encouraging researchers to commit serious research misconduct?
-Please rate from 1 (little impact) to 5 (large impact)
+- A.Lack of co-ordination between relevant research actors, such as institutions, funders and publishers		
+- B. Conflict of interest for institutions investigating their own researchers					 
+- C. Lack of resources					 
+- D. Lack of expertise					 
+- E. Concern about legal repercussions					 
+- F. Large number of vexatious/trivial accusations of misconduct					 
+- G. Bureaucratic delays or inefficiencies in the investigation process					 
+- H. Complexity of cases					 
+- I. Due process concerns to ensure fairness to all involved in the case					 
 
-- A. Low probability of being detected and/or reported
-- B. Low probability of being punished if detected and/or reported
-- C. 'Publish or perish' culture and incentive structure in research (e.g. progression, promotion, recognition)					
-- D. Fear of losing one's job if not sufficiently productive in publishing in prestigious journals
-					
-![](plot_jiscitem_6.png)  
-**Free text comments on item 6**   
+![](plot_jiscitem_5.png)   
+**Free text comments on item 5**    
 
-`r mytext <- df$x15_6b_opt; gatherfree(mytext)`  
+`r mytext <- df$x13_5b_op; gatherfree(mytext)` 	 
 
-## Role of social media
-**Item 7**
-On balance, the role of social media in detecting and reporting serious research
-misconduct has been: (select one) 
-- A. 	predominantly negative - it makes it too easy for vexatious individuals to raise unwarranted complaints, often under the guise of anonymity  
-- B. neither positive nor negative on balance  
-- C. positive - it provides a route for speedy commentary when concerns are discovered  
+## Factors driving serious research misconduct 
+**Item 6**   
+What is the impact of these factors in encouraging researchers to commit serious research misconduct? 
+Please rate from 1 (little impact) to 5 (large impact) 
 
-`r maketab(myjisc,7,df)`  
+- A. Low probability of being detected and/or reported 
+- B. Low probability of being punished if detected and/or reported 
+- C. 'Publish or perish' culture and incentive structure in research (e.g. progression, promotion, recognition)					 
+- D. Fear of losing one's job if not sufficiently productive in publishing in prestigious journals 
 
-**Free text comments on item 7**   
+![](plot_jiscitem_6.png)   
+**Free text comments on item 6**    
 
-`r mytext <- df$x17_7b_opt; gatherfree(mytext)` 
+`r mytext <- df$x15_6b_op; gatherfree(mytext)`  
 
-## Reporting serious research misconduct
-**Item 8**  
-Official channels for reporting misconduct are often slow and obstructive (select one option).  
-- A. Strongly agree
-- B. Moderately agree
-- C. Neither agree nor disagree
-- D. Moderately disagree
-- E. Strongly disagree
+## Role of social media   
+**Item 7**   
+On balance, the role of social media in detecting and reporting serious research 
+misconduct has been: (select one)  
+- A. 	predominantly negative - it makes it too easy for vexatious individuals to raise unwarranted complaints, often under the guise of anonymity   
+- B. neither positive nor negative on balance   
+- C. positive - it provides a route for speedy commentary when concerns are discovered   
 
-`r maketab(myjisc,8,df)`  
+`r maketab(myjisc,7,df)`   
 
-**Free text comments on item 8**   
+**Free text comments on item 7**    
 
-`r mytext <- df$x19_8b_opt; gatherfree(mytext)` 
+`r mytext <- df$x17_7b_op; gatherfree(mytext)`  
 
-## Models for addressing serious research misconduct
-**Item 9**  
-In an ideal world where resources are not an issue, which is the most suitable model/system for addressing serious research misconduct?
+## Reporting serious research misconduct   
+**Item 8**   
+Official channels for reporting misconduct are often slow and obstructive (select one option).   
+- A. Strongly agree  
+- B. Moderately agree  
+- C. Neither agree nor disagree  
+- D. Moderately disagree  
+- E. Strongly disagree  
 
-- A. Self-regulation approach, where academic institutions are responsible for conducting investigations and
-determining sanctions when one of their staff is accused  
-- B. National governance approach, where government regulatory agency is set up for this purpose  
-- C. National guidelines approach; for example, UK's Committee for Research Integrity, which does not have a
-regulatory role, but aims to ensure all institutions work to a common framework  
-- D. Regulatory agency independent of Government  
+`r maketab(myjisc,8,df)`   
 
-![](plot_jiscitem_9.png)  
+**Free text comments on item 8**    
+
+`r mytext <- df$x19_8b_op; gatherfree(mytext)`  
+
+## Models for addressing serious research misconduct 
+**Item 9**   
+In an ideal world where resources are not an issue, which is the most suitable model/system for addressing serious research misconduct? 
+
+- A. Self-regulation approach, where academic institutions are responsible for conducting investigations and 
+determining sanctions when one of their staff is accused   
+- B. National governance approach, where government regulatory agency is set up for this purpose   
+- C. National guidelines approach; for example, UK's Committee for Research Integrity, which does not have a 
+regulatory role, but aims to ensure all institutions work to a common framework   
+- D. Regulatory agency independent of Government   
+
+![](plot_jiscitem_9.png)   
 **Free text comments on item 9**   
 
-`r mytext <- df$x21_9b_opt; gatherfree(mytext)` 
-
-
+`r mytext <- df$x21_9b_op; gatherfree(mytext)` 
 
 

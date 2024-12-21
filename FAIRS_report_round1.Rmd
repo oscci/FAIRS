@@ -11,6 +11,7 @@ require(tidyverse)
 require(viridis)
 require(here)
 require(janitor)
+require(tidyr)
 
 ```
 
@@ -23,6 +24,8 @@ This is a brief document to provide feedback to panelists from Round 1 of the FA
 ```{r groups, echo=F}
 df <- read.csv('dummydata.csv')
 myjisc <- read.csv('survey_template.csv')
+mypanel <- read.csv('Delphi panel_Expression of interest(1-115).csv')
+
 jisccodes <- seq(4,36,2) #X Codes in JISC file corresponding to items
 
 names(df)<-substring(names(df),1,12) #shorten df names to 12 chars
@@ -63,17 +66,19 @@ df<-df[order(df$group),] #cluster group members together
 
 ```{r gatherfreetext, echo=F}
 gatherfree <- function(mytext){
+  dt<-as.data.frame(cbind(df$group,mytext))
+  names(dt)<-c('Group','Comment')
   w<-which(!is.na(mytext))
-  knitr::kable(mytext[w])
+  knitr::kable(dt[w,],row.names=FALSE)
 }
 
 ```
 
-```{r doroundplot, echo=F}
+```{r doplot, echo=F}
 #Used code from https://bookdown.org/content/b298e479-b1ab-49fa-b83d-a57c2b034d49/part.html#circular-stacked-barchart  
 #Now just regular barplot
 
-doround <- function(data,nopt,nitem,df){
+doplot <- function(data,nopt,nitem,df){
   empty_bar <- 2
   nObsType <- nlevels(as.factor(data$response))
   to_add <- data.frame( matrix(NA, empty_bar*nlevels(data$group)*nObsType, ncol(data)) )
@@ -170,7 +175,7 @@ for (i in 1:njisc){
     names(datax)[3:ncol(datax)]<-LETTERS[1:nopt]
     data <- datax %>% gather(key = "item", value="response", -c(1,2)) #long form for this item
     
-    p<-doround(data,nopt,nitem, df ) #call plotting function
+    p<-doplot(data,nopt,nitem, df ) #call plotting function
   }
 }
 
@@ -191,9 +196,36 @@ maketab <- function(myjisc,itemnum,df){
 }
 ```
 
-xxx panelists signed up to take part in the survey, and completed surveys were received from `r nrow(df)` of them.  Those taking part were asked to self-identify into one of three groups, and the distribution of respondents was as follows: `r knitr::kable(table(df$group))`. 
+`r nrow(mypanel)` panelists signed up to take part in the survey, and completed surveys were received from `r nrow(df)` of them.  Those taking part were asked to self-identify into one of three groups, and the distribution of respondents was as follows: `r knitr::kable(table(df$group))`. 
 
-*More here on characterstics of panel members from Microsoft doc. *  
+```{r analysepanel,echo=F}
+mypanel<-clean_names(mypanel)
+gtab <- table(mypanel$gender)
+ctab <- table(mypanel$which_continent_are_you_based_in)
+rtab <- table(mypanel$reason_for_interest_in_taking_part)
+
+emails<-mypanel$email_address
+nUK <- length(grep(".uk",emails))
+edoms <- str_split(emails,"@")
+edoms <- unlist(edoms)
+edoms <- edoms[seq(2,length(edoms),2)]
+
+countrylist<-vector()
+for (e in 1:length(edoms)){
+g <- as.integer(regexpr("\\.[^\\.]*$", edoms[e])) #position of final 
+ecountry <- substr(edoms[e],(g+1),nchar(edoms[e]))
+countrylist<-c(countrylist,ecountry)
+}
+countrylist<-tolower(countrylist)
+
+```
+The gender distribution was as follows:  
+`r knitr::kable(gtab)`    
+The bulk of respondents were from Europe or N America:  
+`r knitr::kable(ctab)`    
+
+And the distribution of email domains was as follows:  
+`r knitr::kable(table(countrylist))`  
 
 For each item in the survey, we show the number of people selecting each response type, prorated to give equal group sizes. Free text comments are also shown. 
 

@@ -1,0 +1,404 @@
+---
+title: "FAIRS report 1"
+author: "Dorothy Bishop"
+date: "2025-01-08"
+output:
+  word_document: default
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+require(tidyverse)
+require(viridis)
+require(here)
+require(janitor)
+require(tidyr)
+
+```
+
+## Summary of FAIRS Survey, round 1
+
+This is a brief document to provide feedback to panelists from Round 1 of the FAIRS survey.  For background to the survey, please see the protocol here: <https://osf.io/mzjsh/>.  
+
+ 
+
+```{r groups, echo=F}
+df <- read.csv('dummy2.csv')
+myjisc <- read.csv('survey_template.csv')
+mypanel <- read.csv('From_MS_Forms.csv')
+
+thispanel<-df[,2] #retain only those who completed the survey
+w<-which(mypanel$anonid %in% thispanel)
+mypanel<-mypanel[w,]
+
+jisccodes <- seq(4,36,2) #X Codes in JISC file corresponding to items
+
+
+
+names(df)<-substring(names(df),1,12) #shorten df names to 12 chars
+names(df)[2:3]<-c('ID','anaesth')
+anaesths<-df[,3] #we will save the lists of anaesthetists but remove from file for now
+df<-df[,-c(3,4)]  #also remove item that is just agreeing to take part.
+df<-clean_names(df)
+ncases <- nrow(df)
+#df[1:ncases,1]<-NA
+
+#rename col for group
+w<-which(names(df)=="x38_we_anti")
+names(df)[w]<-'group'
+df$group<-as.factor(df$group)
+levels(df$group)<-c('1_S','2_R','3_O')
+
+```
+
+
+```{r gatherfreetext, echo=F}
+gatherfree <- function(mytext){
+  dt<-as.data.frame(cbind(df$group,mytext))
+  names(dt)<-c('Group','Comment')
+  w<-which(!is.na(mytext))
+  knitr::kable(dt[w,],row.names=FALSE)
+}
+
+```
+
+
+
+
+`r nrow(mypanel)` panelists signed up to take part in the survey, and completed surveys were received from `r nrow(df)` of them.  Those taking part were asked to self-identify into one of three groups, and the distribution of respondents was as follows: `r knitr::kable(table(df$group))`. 
+
+```{r analysepanel,echo=F}
+mypanel<-clean_names(mypanel)
+gtab <- table(mypanel$gender)
+ctab <- table(mypanel$which_continent_are_you_based_in)
+rtab <- table(mypanel$reason_for_interest_in_taking_part)
+
+emails<-mypanel$email_address
+nUK <- length(grep(".uk",emails))
+edoms <- str_split(emails,"@")
+edoms <- unlist(edoms)
+edoms <- edoms[seq(2,length(edoms),2)]
+
+countrylist<-vector()
+for (e in 1:length(edoms)){
+g <- as.integer(regexpr("\\.[^\\.]*$", edoms[e])) #position of final 
+ecountry <- substr(edoms[e],(g+1),nchar(edoms[e]))
+countrylist<-c(countrylist,ecountry)
+}
+countrylist<-tolower(countrylist)
+
+```
+
+```{r makemeanstab, echo=F} 
+#tabular output for single option items
+maketab <- function(myjisc,itemnum,df){
+  jisccodes <- seq(4,36,2) #X Codes in JISC file corresponding to items
+    itemcode<-paste0('x',jisccodes[itemnum],'_')
+    w<- grep(itemcode,names(df))
+    if(length(w)>1) {w <- w[-1]}
+    
+    sumtab<-data.frame(matrix(NA, nrow=length(w),ncol=4))
+    Ntab <- aggregate(df[,w[1]],by=list(df$group),FUN=length)
+    names(sumtab)[2:4]<-levels(df$group)
+    names(sumtab)[2:4]<-paste0(names(sumtab)," (N = ", Ntab$x,")")
+    names(sumtab)[1]<-'Subitem'
+    
+    for (v in 1:length(w)){ #step through all subitems; will make table with all together
+    
+     meantab<- aggregate(df[,w[v]],by=list(df$group),FUN=mean,na.rm=T)
+     sdtab <- aggregate(df[,w[v]],by=list(df$group),FUN=sd,na.rm=T)
+     
+
+     sumtab[v,2]<-paste0(round(meantab$x[1],2)," (",round(sdtab$x[1],2),")")
+     sumtab[v,3]<-paste0(round(meantab$x[2],2)," (",round(sdtab$x[2],2),")")
+     sumtab[v,4]<-paste0(round(meantab$x[3],2)," (",round(sdtab$x[3],2),")")
+     
+     sumtab[v,1]<-myjisc[itemnum,(7+v)]
+ 
+    }
+  return(sumtab)
+}
+```
+
+The gender distribution was as follows:  
+`r knitr::kable(gtab)`    
+The bulk of respondents were from Europe or N America:  
+`r knitr::kable(ctab)`    
+
+And the distribution of email domains was as follows:  
+`r knitr::kable(table(countrylist))`  
+
+For each item in the survey, we show the number of people selecting each response type, prorated to give equal group sizes. Free text comments are also shown. 
+
+## Priorities  
+### Item 1    
+Which of these should be a primary focus for discussion? (1 for low priority, 3 for high priority). Try to avoid selecting the same response for all options, so that we can identify their relative importance.   
+- A. What constitutes serious research misconduct?			 
+- B. How allegations of serious research misconduct are handled			
+- C. Sanctions for serious research misconduct			
+
+`r sumtab <-(myjisc,1,df); knitr::kable(sumtab,row.names=FALSE)`
+
+
+
+
+## Burdens of serious research misconduct 
+### Item 2       
+How common is the problem of serious research misconduct? (select one)  
+
+- A. Serious research misconduct is rare relative to the amount of published research literature 
+- B. Serious research misconduct is becoming more prevalent and starting to pose a threat to the research literature 
+- C. Serious research misconduct is already common enough to pose a major threat to the research literature 
+
+
+  
+
+### Item 3    
+How harmful are the impacts of serious research misconduct to different segments of society? Please code as 1 (low harm) to 5 (strong harm)  
+
+- A. Consumers of research findings, e.g. patients whose treatment is informed by medical research or policy-makers who depend on research findings					 
+- B. Other researchers who try to build on fraudulent findings 
+- C. Funders, whose funds are wasted 
+- D. Institutions, whose resources are diverted to tackling misconduct 
+- E. Society, when public trust in research is eroded 
+
+ 
+
+## Goals of those responding to serious research misconduct 
+### Item 4    
+In responding to serious research misconduct, several goals may be considered. 
+Please rate how important each of these is, from 1 (unimportant) to 4 (very important) 
+
+- A. To maintain academic integrity, including to correct the academic record		 		 
+- B. To punish offenders   
+- C. To deter others from committing fraud   
+- D. To maintain trust and rigour in research   
+
+ 
+
+## Factors hindering academic institutions' response to serious research misconduct 
+### Item 5   
+Various factors may hinder academic institutions' response to serious research 
+misconduct. Please rate the following from 1 (not much of a hindrance) to 5 (substantial hindrance) 
+
+- A.Lack of co-ordination between relevant research actors, such as institutions, funders and publishers		
+- B. Conflict of interest for institutions investigating their own researchers					 
+- C. Lack of resources					 
+- D. Lack of expertise					 
+- E. Concern about legal repercussions					 
+- F. Large number of vexatious/trivial accusations of misconduct					 
+- G. Bureaucratic delays or inefficiencies in the investigation process					 
+- H. Complexity of cases					 
+- I. Due process concerns to ensure fairness to all involved in the case					 
+
+
+
+## Factors driving serious research misconduct 
+### Item 6   
+What is the impact of these factors in encouraging researchers to commit serious research misconduct? 
+Please rate from 1 (little impact) to 5 (large impact) 
+
+- A. Low probability of being detected and/or reported 
+- B. Low probability of being punished if detected and/or reported 
+- C. 'Publish or perish' culture and incentive structure in research (e.g. progression, promotion, recognition)					 
+- D. Fear of losing one's job if not sufficiently productive in publishing in prestigious journals 
+
+
+
+## Role of social media   
+### Item 7  
+On balance, the role of social media in detecting and reporting serious research 
+misconduct has been: (select one)  
+- A. 	predominantly negative - it makes it too easy for vexatious individuals to raise unwarranted complaints, often under the guise of anonymity   
+- B. neither positive nor negative on balance   
+- C. positive - it provides a route for speedy commentary when concerns are discovered   
+
+
+
+## Reporting serious research misconduct   
+### Item 8   
+Official channels for reporting misconduct are often slow and obstructive (select one option).   
+- A. Strongly agree  
+- B. Moderately agree  
+- C. Neither agree nor disagree  
+- D. Moderately disagree  
+- E. Strongly disagree  
+
+
+
+
+## Models for addressing serious research misconduct 
+### Item 9  
+In an ideal world where resources are not an issue, which is the most suitable model/system for addressing serious research misconduct? 
+
+- A. Self-regulation approach, where academic institutions are responsible for conducting investigations and 
+determining sanctions when one of their staff is accused   
+- B. National governance approach, where government regulatory agency is set up for this purpose   
+- C. National guidelines approach; for example, UK's Committee for Research Integrity, which does not have a 
+regulatory role, but aims to ensure all institutions work to a common framework   
+- D. Regulatory agency independent of Government   
+
+
+
+## Role of employers
+### Item 10  
+Prospective employers should undertake rigorous due diligence and, as far as
+possible, check with previous employers to ask if there have been any investigations into serious research misconduct. 
+- A. Agree
+- B. Neutral
+- C. Disagree
+
+
+
+### Item 11  
+Employers, funders and publishers of research should be legally required to share information to support investigations of serious research misconduct.
+- A. Agree
+- B. Neutral
+- C. Disagree
+
+
+
+## Solutions to serious research misconduct
+### Item 12  
+Given that we have finite resources, which solutions to serious research misconduct should be prioritised in funding?
+Rate the following options from 1 = most preferred, to 5 = least preferred 
+
+- A. Changing criteria for hiring/promotion/funding away from publish/perish model, so that researchers won't be motivated to commit fraud  
+- B. Research ethics training for all researchers  
+- C. Funding/training of research integrity officers  
+- D. Infrastructure to collect and report on serious research misconduct nationally  
+- E. Support for individuals/organisations who have expertise in detection of serious research misconduct  
+
+
+## Role of publishers  
+### Item 13 
+It is not the responsibility of publishers or journal editors to determine whether serious research misconduct has occurred, but they are responsible for ensuring the literature is decontaminated from erroneous work promptly. Please rate the following statements in accordance with your views on how this should work, from 1 = strongly disagree to 5 = strongly agree. 
+
+- A. Articles that contain serious errors that undermine confidence in the findings should be retracted promptly, without waiting for an institutional investigation  
+- B. Publishers and institutions should work together to facilitate sharing of key information when serious research misconduct is suspected  
+- C. If conditions for retraction are not met, an expression of concern may be added to an article while an institution conducts an investigation  
+- D. When an institutional investigation is completed, the institution should directly approach the publisher of articles affected by severe research misconduct and request retraction  
+- E. When a publisher finds the same author repeatedly flagged for erroneous material, they should communicate this to research integrity officer at the author's institution  
+- F. When a publisher or institution finds the same researcher repeatedly flagged for erroneous material, their name should be added to a database. (NB. If there is sufficient endorsement of this statement, there would need to be discussion of how this works in terms of legal, practical and ethical aspects.)  
+
+
+
+## Whistleblowers and bystanders  
+### Item 14  
+Please rate your agreement with the following statements about whistleblowers from 1 = strongly disagree to 5 = strongly agree  
+
+- A. There are disincentives for researchers to report serious research misconduct					
+- B. Usually there is insufficient protection for whistleblowers who report serious research misconduct					
+- C. It is important to be aware of and mitigate collateral damage that may be caused to other members of a research group if one member is found to have committed serious research misconduct					
+- D. Whistleblowers should have their identities protected, with confidential channels for reporting suspected serious research misconduct					
+
+
+
+## When serious research misconduct is confirmed  
+### Item 15  
+Which of these practices should be options for institutions when serious research misconduct is confirmed.
+Please give your rating from 1 = strongly disagree to 5 = strongly agree.*
+  
+- A. Educational retraining for researchers who have been found to commit serious research misconduct  
+- B. Restorative justice approaches; e.g. requirement to meet those affected by the misconduct to discuss its impact  
+- C. Sanctions such as demotion or dismissal  
+- D. Report on the investigation made public, with identities of those found to have committed serious research misconduct disclosed  
+
+
+
+## Unintended consequences/barriers to progress  
+### Item 16  
+Please rate your agreement with the following statements about unintended consequences/barriers to progress from 1 = strongly disagree to 5 = strongly agree  
+
+
+
+### Item 17  
+"One of the likely drivers of trust and distrust in research is the way research institutes, publishers, and funders respond to allegations of research misconduct" (Bouter, 2024)   
+- A. Agree  
+- B. Neutral  
+- C. Disagree   
+
+
+
+## Free text comments
+
+**Free text comments on item 1**  
+`r mytext <- df$x5_1b_opt; gatherfree(mytext)`
+
+**Free text comments on item 2**    
+
+`r mytext <- df$x7_2b_opt; gatherfree(mytext)` 
+
+
+**Free text comments on item 3**    
+
+`r mytext <- df$x9_3b_opt; gatherfree(mytext)`  
+
+  
+**Free text comments on item 4**    
+
+`r mytext <- df$x11_4b_op; gatherfree(mytext)`  
+  
+**Free text comments on item 5**    
+
+`r mytext <- df$x13_5b_op; gatherfree(mytext)` 	 
+
+
+**Free text comments on item 6**    
+
+`r mytext <- df$x15_6b_op; gatherfree(mytext)`  
+
+
+**Free text comments on item 7**    
+
+`r mytext <- df$x17_7b_op; gatherfree(mytext)`  
+
+**Free text comments on item 8**    
+
+`r mytext <- df$x19_8b_op; gatherfree(mytext)`  
+
+ 
+**Free text comments on item 9**   
+
+`r mytext <- df$x21_9b_op; gatherfree(mytext)` 
+
+**Free text comments on item 10**   
+
+`r mytext <- df$x23_10b_o; gatherfree(mytext)` 
+
+
+**Free text comments on item 11**   
+
+`r mytext <- df$x25_11b_o; gatherfree(mytext)` 
+
+
+
+**Free text comments on item 12**   
+
+`r mytext <- df$x27_12b_o; gatherfree(mytext)`  
+
+**Free text comments on item 13**   
+
+`r mytext <- df$x29_13b_o; gatherfree(mytext)`  
+
+
+**Free text comments on item 14** 
+`r mytext <- df$x31_14b_o; gatherfree(mytext)`  
+
+
+**Free text comments on item 15** 
+`r mytext <- df$x33_15b_o; gatherfree(mytext)`
+
+**Free text comments on item 16** 
+`r mytext <- df$x35_16b_o; gatherfree(mytext)`  
+
+**Free text comments on item 17** 
+`r mytext <- df$x35_17b_o; gatherfree(mytext)`  
+
+## Final thoughts   
+**Free text comments: final thoughts**  
+`r mytext <- df$x38_any_oth; gatherfree(mytext)`  
+
+

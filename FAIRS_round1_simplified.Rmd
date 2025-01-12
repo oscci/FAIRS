@@ -74,8 +74,8 @@ df<-df[order(df$group),] #order by group - easier to follow when listing free te
 
 ```{r gatherfreetext, echo=F}
 gatherfree <- function(mytext){
-  mytext<-paste0(df$group,") ",mytext)
-   f<-which(nchar(mytext)>7)
+  mytext<-paste0(row.names(df),"_",df$group,") ",mytext)
+   f<-which(nchar(mytext)>8)
   mytext<-mytext[f]
 
    #str_replace_all(mytext, "[\r\n]" , ". ")
@@ -202,6 +202,49 @@ myft
 }
 ```
 
+```{r proportionagree, echo = FALSE}
+propagree <- function(itemnum,df,cutoff,respmax){
+
+  jisccodes <- seq(4,36,2) #X Codes in JISC file corresponding to items
+    itemcode<-paste0('x',jisccodes[itemnum],'_')
+    w<- grep(itemcode,names(df))
+    if(length(w)>1) {w <- w[-1]} #for these items, w should already be 1;
+    
+    #agreetab will just record answer where 80% or more agreement
+    agreetab<-data.frame(matrix (NA, nrow=length(w),ncol=5))
+    names(agreetab)<-c('Subitem',levels(df$group),'All')
+    myoptions <- 1:respmax
+    
+    thisbit <- df[,w]
+    #Check for 5 point scale and collapse extremes, so scale is now 1, 3, 5
+    if(respmax==5){
+      myoptions <-c(1.5,3,4.5)
+      for(v in 1:length(w)){
+        ww<-which(thisbit[,v]==4)
+        thisbit[ww,v] <- 5   
+        ww<-which(thisbit[,v]==2)
+        thisbit[ww,v] <- 1 
+      }
+    }
+    
+    for (v in 1:length(w)){ #stepping through subitems
+      thistab <- table(thisbit[,v],df$group)
+      thistab <- cbind(thistab,table(thisbit[,v])) #last col has All cases
+      ptab <- prop.table(thistab,2) #proportion of each response by group (2nd num indicates col proportion rather than row)
+    for (g in 1:4){ #may want to ignore group 3, but will compute it here
+      m<-max(ptab[,g]) #most endorsed response for this subitem and this group
+      if(m > cutoff) {thisoption <- match(m,ptab[,g]) #find which response this is 
+      
+        agreetab[v,(g+1)]<-myoptions[thisoption]}
+    }
+    
+    }  
+    agreetab[,1]<-LETTERS[1:nrow(agreetab)]
+    agreetab <- as.data.frame(agreetab)
+    myft <- flextable(agreetab)
+    myft
+}
+```
 
 The gender distribution was as follows:  
 `r flextable(gtab)|> autofit()`    
@@ -213,6 +256,8 @@ The bulk of respondents were from Europe or N America:
 
 For items coded quantitatively, we show the mean and (SD) for each subgroup, where subgroup 1 = S(leuths), 2 = R(esearch Integrity Officers) and 3 = O(ther).  For simple multiple choice items, the table shows percentages in each group with a given response.
 
+N.B. For feedback to respondents, I can generate an individualised version of this report that includes a column showing which response they gave. 
+
 ## Priorities  
 ### Item 1    
 Which of these should be a primary focus for discussion? (1 for low priority, 3 for high priority). 
@@ -222,6 +267,11 @@ Which of these should be a primary focus for discussion? (1 for low priority, 3 
 - C. Sanctions for serious research misconduct	-->		
 
 `r makemeanstab(myjisc,1,df,thisrow)`
+
+For this item, agreement was computed simply as the proportion of individuals in a group endorsing the most popular option for that group. This table shows any response options that exceeded `r mycutoff <- .8; mycutoff` agreement. 
+`r  propagree(1,df,mycutoff,respmax=3)`
+
+
 
 **Free text comments on item 1**  
 `r mytext <- df$x5_1b_opt; gatherfree(mytext)`
@@ -238,6 +288,7 @@ Table shows percentages selecting each option in each group
 
 `r makecattab(myjisc,2,df,thisrow,c("rare","prevalent","common"))`
   
+
 **Free text comments on item 2**    
 
 `r mytext <- df$x7_2b_opt; gatherfree(mytext)` 
@@ -248,9 +299,12 @@ How harmful are the impacts of serious research misconduct to different segments
 
  `r makemeanstab(myjisc,3,df,thisrow)`
 
+`r  propagree(3,df,mycutoff,respmax=5)`  
+<!-- for those on 1-5 scale, can combine outer categories -->
+
 **Free text comments on item 3**    
 
-`r mytext <- df$x9_2b_opt; gatherfree(mytext)` 
+`r mytext <- df$x9_3b_opt; gatherfree(mytext)` 
 
 ## Goals of those responding to serious research misconduct 
 ### Item 4    
@@ -259,9 +313,11 @@ Please rate how important each of these is, from 1 (unimportant) to 4 (very impo
 
  `r makemeanstab(myjisc,4,df,thisrow)`
  
+`r  propagree(4,df,mycutoff,respmax=4)` 
+ 
  **Free text comments on item 4**    
 
-`r mytext <- df$x11_2b_opt; gatherfree(mytext)` 
+`r mytext <- df$x11_4b_op; gatherfree(mytext)` 
 
 ## Factors hindering academic institutions' response to serious research misconduct 
 ### Item 5   
@@ -270,9 +326,11 @@ misconduct. Please rate the following from 1 (not much of a hindrance) to 5 (sub
 
 `r makemeanstab(myjisc,5,df,thisrow)`
 
+`r  propagree(5,df,mycutoff,respmax=5)` 
+
  **Free text comments on item 5**    
 
-`r mytext <- df$x13_2b_opt; gatherfree(mytext)` 
+`r mytext <- df$x13_5b_op; gatherfree(mytext)` 
 
 ## Factors driving serious research misconduct 
 ### Item 6   
@@ -282,9 +340,11 @@ Please rate from 1 (little impact) to 5 (large impact)
 
 `r makemeanstab(myjisc,6,df,thisrow)`
 
+`r  propagree(6,df,mycutoff,respmax=5)` 
+
  **Free text comments on item 6**    
 
-`r mytext <- df$x15_2b_opt; gatherfree(mytext)` 
+`r mytext <- df$x15_6b_op; gatherfree(mytext)` 
 
 ## Role of social media   
 ### Item 7  
@@ -297,9 +357,11 @@ Table shows percentages selecting each option in each group.
 
 `r makecattab(myjisc,7,df,thisrow,c('predominantly','neither','speedy'))`
 
+
+
  **Free text comments on item 7**    
 
-`r mytext <- df$x17_2b_opt; gatherfree(mytext)` 
+`r mytext <- df$x17_7b_op; gatherfree(mytext)` 
 
 ## Reporting serious research misconduct   
 ### Item 8   
@@ -308,9 +370,11 @@ Table shows percentages selecting each option in each group.
 
 `r makecattab(myjisc,8,df,thisrow,c('Strongly agree','Moderately agree','Neither agree nor disagree','Moderately disagree','Strongly disagree'))`
 
+
+
  **Free text comments on item 8**    
 
-`r mytext <- df$x19_2b_opt; gatherfree(mytext)` 
+`r mytext <- df$x19_8b_op; gatherfree(mytext)` 
 
 ## Models for addressing serious research misconduct 
 ### Item 9  
@@ -324,11 +388,14 @@ regulatory role, but aims to ensure all institutions work to a common framework
 - D. Regulatory agency independent of Government   
 -->
 
+
 `r makemeanstab(myjisc,9,df,thisrow)`
+
+`r  propagree(9,df,mycutoff,respmax=4)` 
 
  **Free text comments on item 9**    
 
-`r mytext <- df$x21_2b_opt; gatherfree(mytext)` 
+`r mytext <- df$x21_9b_op; gatherfree(mytext)` 
 
 ## Role of employers
 ### Item 10  
@@ -342,9 +409,11 @@ Table shows percentages selecting each option in each group.
 
 `r makecattab(myjisc,10,df,thisrow,c('Agree','Neutral','Disagree'))`
 
+
+
  **Free text comments on item 10**    
 
-`r mytext <- df$x23_2b_opt; gatherfree(mytext)` 
+`r mytext <- df$x23_10b_o; gatherfree(mytext)` 
 
 ### Item 11  
 Employers, funders and publishers of research should be legally required to share information to support investigations of serious research misconduct.  
@@ -357,9 +426,11 @@ Table shows percentages selecting each option in each group.
 
 `r makecattab(myjisc,11,df,thisrow,c('Agree','Neutral','Disagree'))`
 
+
+
  **Free text comments on item 11**    
 
-`r mytext <- df$x25_2b_opt; gatherfree(mytext)` 
+`r mytext <- df$x25_11b_o; gatherfree(mytext)` 
 
 ## Solutions to serious research misconduct
 ### Item 12  
@@ -375,9 +446,11 @@ Rate the following options from 1 = most preferred, to 5 = least preferred
 
 `r makemeanstab(myjisc,12,df,thisrow)`
 
+`r  propagree(12,df,mycutoff,respmax=5)` 
+
  **Free text comments on item 12**    
 
-`r mytext <- df$x27_2b_opt; gatherfree(mytext)` 
+`r mytext <- df$x27_12b_o; gatherfree(mytext)` 
 
 ## Role of publishers  
 ### Item 13 
@@ -393,9 +466,11 @@ It is not the responsibility of publishers or journal editors to determine wheth
 
 `r makemeanstab(myjisc,13,df,thisrow)`
 
+`r  propagree(13,df,mycutoff,respmax=5)` 
+
  **Free text comments on item 13**    
 
-`r mytext <- df$x29_2b_opt; gatherfree(mytext)`
+`r mytext <- df$x29_13b_o; gatherfree(mytext)`
 
 ## Whistleblowers and bystanders  
 ### Item 14  
@@ -409,9 +484,11 @@ Please rate your agreement with the following statements about whistleblowers fr
 
 `r makemeanstab(myjisc,14,df,thisrow)`
 
+`r  propagree(14,df,mycutoff,respmax=5)` 
+
  **Free text comments on item 14**    
 
-`r mytext <- df$x31_2b_opt; gatherfree(mytext)`
+`r mytext <- df$x31_14b_o; gatherfree(mytext)`
 
 ## When serious research misconduct is confirmed  
 ### Item 15  
@@ -427,9 +504,11 @@ Please give your rating from 1 = strongly disagree to 5 = strongly agree.*
 
 `r makemeanstab(myjisc,15,df,thisrow)`
 
+`r  propagree(15,df,mycutoff,respmax=5)` 
+
  **Free text comments on item 15**    
 
-`r mytext <- df$x33_2b_opt; gatherfree(mytext)`
+`r mytext <- df$x33_15b_o; gatherfree(mytext)`
 
 ## Unintended consequences/barriers to progress  
 ### Item 16  
@@ -443,9 +522,11 @@ Please rate your agreement with the following statements about unintended conseq
 
 `r makemeanstab(myjisc,16,df,thisrow)`
 
+`r  propagree(16,df,mycutoff,respmax=5)` 
+
  **Free text comments on item 16**    
 
-`r mytext <- df$x35_2b_opt; gatherfree(mytext)`
+`r mytext <- df$x35_16b_o; gatherfree(mytext)`
 
 ### Item 17  
 "One of the likely drivers of trust and distrust in research is the way research institutes, publishers, and funders respond to allegations of research misconduct" (Bouter, 2024)   
@@ -454,9 +535,11 @@ Table shows percentages selecting each option in each group.
 
 `r makecattab(myjisc,17,df,thisrow,c('Agree','Neutral','Disagree'))`
 
+
+
  **Free text comments on item 17**    
 
-`r mytext <- df$x37_2b_opt; gatherfree(mytext)`
+`r mytext <- df$x37_17b_o; gatherfree(mytext)`
 
 <!--## Free text comments
 

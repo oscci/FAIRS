@@ -1,6 +1,6 @@
 ---
 title: "FAIRS report, Round 1"
-author: "Dorothy Bishop"
+author: "Dorothy V. M. Bishop"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 output:
   word_document: default
@@ -16,12 +16,13 @@ require(here)
 require(janitor)
 require(tidyr)
 library(stringr)
+require(flextable)
 
 ```
 
 ## Summary of FAIRS Survey, round 1
 
-This is a brief document to provide feedback to panelists from Round 1 of the FAIRS survey.  For background to the survey, please see the protocol here: <https://osf.io/mzjsh/>.  
+This is a preliminary document to provide feedback to moderators from Round 1 of the FAIRS survey.  For background to the survey, please see the protocol here: <https://osf.io/mzjsh/>.  
 
  
 
@@ -33,11 +34,12 @@ thisrow <- 0 #set to zero if no individualised data in report. Otherwise thisnum
 #for testing: wanted file is just top file in list for nwo
 myf<-list.files()  #all files in working directory
 #this is myf[1] in test, but spell it out here
-thisf <- "cm46vj4fd001i1020aww1cwpy-analytics-uncoded-11-01-2025.csv"
+thisf <- "cm46vj4fd001i1020aww1cwpy-analytics-uncoded-12-01-2025-2.csv"
 
 df <- read.csv(thisf)
 myjisc <- read.csv('survey_template.csv')
 mypanel <- read.csv('From_MS_Forms.csv')
+signedup <- nrow(mypanel)
 
 thispanel<-df[,2] #retain only those who completed the survey
 w<-which(mypanel$anonid %in% thispanel)
@@ -63,7 +65,7 @@ df$group<-as.factor(df$group)
 levels(df$group)<-c('1_S','2_R','3_O')
 
 
-
+df<-df[order(df$group),] #order by group - easier to follow when listing free text responses
 
 
 
@@ -76,9 +78,13 @@ gatherfree <- function(mytext){
    f<-which(nchar(mytext)>7)
   mytext<-mytext[f]
 
-    str_replace_all(mytext, "[\r\n]" , ". ")
+   #str_replace_all(mytext, "[\r\n]" , ". ")
 
- knitr::kable(mytext,escape=FALSE)
+# knitr::kable(mytext,escape=FALSE)
+  set_flextable_defaults(font.size = 9)
+myft <- flextable(as.data.frame(mytext))
+myft <- set_table_properties(myft,layout="autofit")
+myft
 
 }
 
@@ -87,12 +93,18 @@ gatherfree <- function(mytext){
 
 
 
-`r nrow(mypanel)` panelists signed up to take part in the survey, and completed surveys were received from `r nrow(df)` of them.  Those taking part were asked to self-identify into one of three groups, and the distribution of respondents was as follows: `r knitr::kable(table(df$group))`. 
+`r signedup` panelists signed up to take part in the survey, and completed surveys were received from `r nrow(df)` of them.  Those taking part were asked to self-identify into one of three groups, and the distribution of respondents was as follows: 
+  
+- Sleuths, Whistleblowers, etc (Group S), N = `r length(which(df$group=='1_S'))`   
+- Research Integrity Officers, etc (Group R), N = `r length(which(df$group=='2_R'))`   
+- Others (Group O), N = `r length(which(df$group=='3_O'))`.  
 
 ```{r analysepanel,echo=F}
 mypanel<-clean_names(mypanel)
-gtab <- table(mypanel$gender)
-ctab <- table(mypanel$which_continent_are_you_based_in)
+gtab <- as.data.frame(table(mypanel$gender))
+names(gtab)<-c('Gender','N')
+ctab <- as.data.frame(table(mypanel$which_continent_are_you_based_in))
+names(ctab)<-c('Continent','N')
 rtab <- table(mypanel$reason_for_interest_in_taking_part)
 
 emails<-mypanel$email_address
@@ -122,7 +134,7 @@ makemeanstab <- function(myjisc,itemnum,df,thisrow){
     sumtab<-data.frame(matrix(NA, nrow=length(w),ncol=5))
     Ntab <- aggregate(df[,w[1]],by=list(df$group),FUN=length)
     names(sumtab)[2:4]<-levels(df$group)
-    names(sumtab)[2:4]<-paste0(names(sumtab[2:4])," (N = ", Ntab$x,")")
+    names(sumtab)[2:4]<-paste0(names(sumtab[2:4])," \n(N = ", Ntab$x,")")
     names(sumtab)[1]<-'Subitem'
     names(sumtab)[5]<-"Your response"
     
@@ -136,13 +148,19 @@ makemeanstab <- function(myjisc,itemnum,df,thisrow){
      sumtab[v,3]<-paste0(round(meantab$x[2],2)," (",round(sdtab$x[2],2),")")
      sumtab[v,4]<-paste0(round(meantab$x[3],2)," (",round(sdtab$x[3],2),")")
      
-     sumtab[v,1]<-myjisc[itemnum,(7+v)]
+     sumtab[v,1]<-paste0(LETTERS[v],") ",myjisc[itemnum,(7+v)])
      if(thisrow>0) {sumtab[v,5]<-df[thisrow,w[v]]}
  
     }
     if(thisrow==0){sumtab <- sumtab[,1:4]} 
     #Set thisrow to zero if you want means but not an individual response
-  knitr::kable(sumtab,row.names=FALSE,digits=2)
+  #knitr::kable(sumtab,row.names=FALSE,digits=2)
+      # myft <- flextable(as.data.frame(sumtab))
+      # myft <- set_table_properties(myft,layout="autofit")
+      # myft
+  myft <- flextable(as.data.frame(sumtab))
+myft <- set_table_properties(myft,layout="autofit")
+myft
 }
 ```
 
@@ -157,9 +175,11 @@ makecattab <- function(myjisc,itemnum,df,thisrow,myterms){
     
     #now recode items, using the myterms variable
     
+    thist <-0
     for (t in 1:length(myterms)){
       x <- grep(myterms[t],df[,w]) #rows where this term matches
       df[x,w]<-t
+      if(thisrow %in% x) {thist <-t}
     }
     
     
@@ -167,31 +187,31 @@ makecattab <- function(myjisc,itemnum,df,thisrow,myterms){
     sumtab <-as.data.frame.matrix(100*prop.table(rawtab,2))
     sumtab <- round(sumtab,1)
     optnames <- unlist(as.vector(myjisc[itemnum,(7+(1:nrow(sumtab)))]))
+    optnames <- paste0(LETTERS[1:nrow(sumtab)],") ",optnames)
     sumtab<-cbind(optnames,sumtab)
+    sumtab[thist,1]<-paste(sumtab[thist,1],"*")
     
-    if(thisrow > 0){
-    myrow<-nrow(sumtab)+1
-    sumtab[myrow,]<-'-'
-    sumtab[myrow,1]<-'Your response'
-    mygroup <- as.numeric(df$group[thisrow])
-    sumtab[myrow,(1+mygroup)]<-LETTERS[df[thisrow,w]]
-    }
+    
     
    
-  knitr::kable(sumtab,row.names=FALSE)
+ # knitr::kable(sumtab,row.names=FALSE)
+  
+  myft <- flextable(as.data.frame(sumtab))
+myft <- set_table_properties(myft,layout="autofit")
+myft
 }
 ```
 
 
 The gender distribution was as follows:  
-`r knitr::kable(gtab)`    
+`r flextable(gtab)|> autofit()`    
 The bulk of respondents were from Europe or N America:  
-`r knitr::kable(ctab)`    
+`r flextable(ctab) |> autofit()`    
 
 <!--- And the distribution of email domains was as follows:  
 `r knitr::kable(table(countrylist))`  --->
 
-For items coded quantitatively, we show the mean and (SD) for each subgroup, where subgroup 1 = S(leuths), 2 = R(esearch Integrity Officers) and 3 = O(ther).  
+For items coded quantitatively, we show the mean and (SD) for each subgroup, where subgroup 1 = S(leuths), 2 = R(esearch Integrity Officers) and 3 = O(ther).  For simple multiple choice items, the table shows percentages in each group with a given response.
 
 ## Priorities  
 ### Item 1    
@@ -203,12 +223,14 @@ Which of these should be a primary focus for discussion? (1 for low priority, 3 
 
 `r makemeanstab(myjisc,1,df,thisrow)`
 
-
+**Free text comments on item 1**  
+`r mytext <- df$x5_1b_opt; gatherfree(mytext)`
 
 
 ## Burdens of serious research misconduct 
 ### Item 2       
-How common is the problem of serious research misconduct? (select one)  
+How common is the problem of serious research misconduct? (select one).
+Table shows percentages selecting each option in each group
 
 <!-- - A. Serious research misconduct is rare relative to the amount of published research literature 
 - B. Serious research misconduct is becoming more prevalent and starting to pose a threat to the research literature 
@@ -216,6 +238,9 @@ How common is the problem of serious research misconduct? (select one)
 
 `r makecattab(myjisc,2,df,thisrow,c("rare","prevalent","common"))`
   
+**Free text comments on item 2**    
+
+`r mytext <- df$x7_2b_opt; gatherfree(mytext)` 
 
 ### Item 3    
 How harmful are the impacts of serious research misconduct to different segments of society? Please code as 1 (low harm) to 5 (strong harm)  
@@ -223,12 +248,20 @@ How harmful are the impacts of serious research misconduct to different segments
 
  `r makemeanstab(myjisc,3,df,thisrow)`
 
+**Free text comments on item 3**    
+
+`r mytext <- df$x9_2b_opt; gatherfree(mytext)` 
+
 ## Goals of those responding to serious research misconduct 
 ### Item 4    
 In responding to serious research misconduct, several goals may be considered. 
 Please rate how important each of these is, from 1 (unimportant) to 4 (very important) 
 
  `r makemeanstab(myjisc,4,df,thisrow)`
+ 
+ **Free text comments on item 4**    
+
+`r mytext <- df$x11_2b_opt; gatherfree(mytext)` 
 
 ## Factors hindering academic institutions' response to serious research misconduct 
 ### Item 5   
@@ -236,6 +269,10 @@ Various factors may hinder academic institutions' response to serious research
 misconduct. Please rate the following from 1 (not much of a hindrance) to 5 (substantial hindrance) 
 
 `r makemeanstab(myjisc,5,df,thisrow)`
+
+ **Free text comments on item 5**    
+
+`r mytext <- df$x13_2b_opt; gatherfree(mytext)` 
 
 ## Factors driving serious research misconduct 
 ### Item 6   
@@ -245,22 +282,35 @@ Please rate from 1 (little impact) to 5 (large impact)
 
 `r makemeanstab(myjisc,6,df,thisrow)`
 
+ **Free text comments on item 6**    
+
+`r mytext <- df$x15_2b_opt; gatherfree(mytext)` 
+
 ## Role of social media   
 ### Item 7  
 On balance, the role of social media in detecting and reporting serious research 
-misconduct has been: 
+misconduct has been (select one).  
+Table shows percentages selecting each option in each group.
 <!-- - A. 	predominantly negative - it makes it too easy for vexatious individuals to raise unwarranted complaints, often under the guise of anonymity   
 - B. neither positive nor negative on balance   
 - C. positive - it provides a route for speedy commentary when concerns are discovered   -->
 
 `r makecattab(myjisc,7,df,thisrow,c('predominantly','neither','speedy'))`
 
+ **Free text comments on item 7**    
+
+`r mytext <- df$x17_2b_opt; gatherfree(mytext)` 
+
 ## Reporting serious research misconduct   
 ### Item 8   
 Official channels for reporting misconduct are often slow and obstructive (select one option).   
-
+Table shows percentages selecting each option in each group.
 
 `r makecattab(myjisc,8,df,thisrow,c('Strongly agree','Moderately agree','Neither agree nor disagree','Moderately disagree','Strongly disagree'))`
+
+ **Free text comments on item 8**    
+
+`r mytext <- df$x19_2b_opt; gatherfree(mytext)` 
 
 ## Models for addressing serious research misconduct 
 ### Item 9  
@@ -276,25 +326,40 @@ regulatory role, but aims to ensure all institutions work to a common framework
 
 `r makemeanstab(myjisc,9,df,thisrow)`
 
+ **Free text comments on item 9**    
+
+`r mytext <- df$x21_2b_opt; gatherfree(mytext)` 
+
 ## Role of employers
 ### Item 10  
 Prospective employers should undertake rigorous due diligence and, as far as
-possible, check with previous employers to ask if there have been any investigations into serious research misconduct. 
+possible, check with previous employers to ask if there have been any investigations into serious research misconduct.  
 <!-- - A. Agree
 - B. Neutral
 - C. Disagree
 -->
+Table shows percentages selecting each option in each group.  
 
 `r makecattab(myjisc,10,df,thisrow,c('Agree','Neutral','Disagree'))`
 
+ **Free text comments on item 10**    
+
+`r mytext <- df$x23_2b_opt; gatherfree(mytext)` 
+
 ### Item 11  
-Employers, funders and publishers of research should be legally required to share information to support investigations of serious research misconduct.
+Employers, funders and publishers of research should be legally required to share information to support investigations of serious research misconduct.  
 <!-- - A. Agree
 - B. Neutral
 - C. Disagree
 -->
+Table shows percentages selecting each option in each group.  
+(For personalised report, * denotes the response you selected). 
 
 `r makecattab(myjisc,11,df,thisrow,c('Agree','Neutral','Disagree'))`
+
+ **Free text comments on item 11**    
+
+`r mytext <- df$x25_2b_opt; gatherfree(mytext)` 
 
 ## Solutions to serious research misconduct
 ### Item 12  
@@ -310,6 +375,10 @@ Rate the following options from 1 = most preferred, to 5 = least preferred
 
 `r makemeanstab(myjisc,12,df,thisrow)`
 
+ **Free text comments on item 12**    
+
+`r mytext <- df$x27_2b_opt; gatherfree(mytext)` 
+
 ## Role of publishers  
 ### Item 13 
 It is not the responsibility of publishers or journal editors to determine whether serious research misconduct has occurred, but they are responsible for ensuring the literature is decontaminated from erroneous work promptly. Please rate the following statements in accordance with your views on how this should work, from 1 = strongly disagree to 5 = strongly agree. 
@@ -324,6 +393,10 @@ It is not the responsibility of publishers or journal editors to determine wheth
 
 `r makemeanstab(myjisc,13,df,thisrow)`
 
+ **Free text comments on item 13**    
+
+`r mytext <- df$x29_2b_opt; gatherfree(mytext)`
+
 ## Whistleblowers and bystanders  
 ### Item 14  
 Please rate your agreement with the following statements about whistleblowers from 1 = strongly disagree to 5 = strongly agree  
@@ -335,6 +408,10 @@ Please rate your agreement with the following statements about whistleblowers fr
 -->
 
 `r makemeanstab(myjisc,14,df,thisrow)`
+
+ **Free text comments on item 14**    
+
+`r mytext <- df$x31_2b_opt; gatherfree(mytext)`
 
 ## When serious research misconduct is confirmed  
 ### Item 15  
@@ -350,6 +427,10 @@ Please give your rating from 1 = strongly disagree to 5 = strongly agree.*
 
 `r makemeanstab(myjisc,15,df,thisrow)`
 
+ **Free text comments on item 15**    
+
+`r mytext <- df$x33_2b_opt; gatherfree(mytext)`
+
 ## Unintended consequences/barriers to progress  
 ### Item 16  
 Please rate your agreement with the following statements about unintended consequences/barriers to progress from 1 = strongly disagree to 5 = strongly agree  
@@ -362,18 +443,22 @@ Please rate your agreement with the following statements about unintended conseq
 
 `r makemeanstab(myjisc,16,df,thisrow)`
 
+ **Free text comments on item 16**    
+
+`r mytext <- df$x35_2b_opt; gatherfree(mytext)`
+
 ### Item 17  
 "One of the likely drivers of trust and distrust in research is the way research institutes, publishers, and funders respond to allegations of research misconduct" (Bouter, 2024)   
 
+Table shows percentages selecting each option in each group.  
 
 `r makecattab(myjisc,17,df,thisrow,c('Agree','Neutral','Disagree'))`
 
-## Free text comments
-```{r reorderbygroup, echo=F}
+ **Free text comments on item 17**    
 
-#sort by group: makes it easier when looking at free text at the end
-df<-df[order(df$group),]
-```
+`r mytext <- df$x37_2b_opt; gatherfree(mytext)`
+
+<!--## Free text comments
 
 
 **Free text comments on item 1**  
@@ -448,6 +533,7 @@ df<-df[order(df$group),]
 
 **Free text comments on item 17** 
 `r mytext <- df$x37_17b_o; gatherfree(mytext)`  
+-->
 
 ## Final thoughts   
 **Free text comments: final thoughts**  

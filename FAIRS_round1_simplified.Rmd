@@ -24,7 +24,7 @@ require(flextable)
 
 This is a preliminary document to provide feedback to moderators from Round 1 of the FAIRS survey.  For background to the survey, please see the protocol here: <https://osf.io/mzjsh/>.  
 
- 
+<!-- NOte that most text is generated from data, but the sections on Agreement were added after scrutinising the agreement tables.  May need modifying if more data comes in -->
 
 ```{r setupdata, echo=F}
 thisrow <- 0 #set to zero if no individualised data in report. Otherwise thisnumber specifies the row to be used in individualsed report
@@ -205,10 +205,7 @@ makecattab <- function(myjisc,itemnum,df,thisrow,myterms){
     sumtab<-cbind(optnames,sumtab)
     sumtab[thist,1]<-paste(sumtab[thist,1],"*")
     
-    
-    
-   
- # knitr::kable(sumtab,row.names=FALSE)
+
   
   myft <- flextable(as.data.frame(sumtab))
 myft <- set_table_properties(myft,layout="autofit")
@@ -282,7 +279,10 @@ Which of these should be a primary focus for discussion? (1 for low priority, 3 
 
 `r makemeanstab(myjisc,1,df,thisrow)`
 
-For this item, agreement was computed simply as the proportion of individuals in a group endorsing the most popular option for that group. This table shows any response options that exceeded `r mycutoff <- .8; mycutoff` agreement. 
+For quantitative ratings like these, agreement was computed as the proportion of individuals in a group endorsing the most popular option for that group, and flagged when one option was selected by at least `r mycutoff <- .8; mycutoff` of the group. As there were only 3 options, no chunking of responses was done for this item. 
+
+*There was no combination of group/response that achieved the `r mycutoff` level of agreement*. 
+
 `r  propagree(1,df,mycutoff,respmax=3)`
 
 
@@ -302,6 +302,7 @@ Table shows percentages selecting each option in each group
 
 `r makecattab(myjisc,2,df,thisrow,c("rare","prevalent","common"))`
   
+**Agreement**: .  For this item, over 80% sleuths endorse response C, whereas far fewer do so in the other groups. 
 
 **Free text comments on item 2**    
 
@@ -310,9 +311,12 @@ Table shows percentages selecting each option in each group
 ### Item 3    
 How harmful are the impacts of serious research misconduct to different segments of society? Please code as 1 (low harm) to 5 (strong harm)  
 
-(NB For all items rated on a 5-point scale, when computing agreement, a 3-point scale is used, with 1-2 collapsed and 4-5 collapsed).
+
 
  `r makemeanstab(myjisc,3,df,thisrow)`
+All options except D (institutions) had a mean rating of 3 or more.  
+
+**Agreement**: A 3-point scale was used to compute agreement, with 1-2 collapsed and 4-5 collapsed.   80% agreement was achieved for subitem A (research consumers) by group R, and for subitem B, where harm to other researchers was rated as high by all groups. 
 
 `r  propagree(3,df,mycutoff,respmax=5)`  
 <!-- for those on 1-5 scale, can combine outer categories -->
@@ -328,6 +332,8 @@ Please rate how important each of these is, from 1 (unimportant) to 4 (very impo
 
  `r makemeanstab(myjisc,4,df,thisrow)`
  
+**Agreement**: The only cases of 80% agreement are for option A, group R, and option D groups R and O, where over 80% gave highest ranking (4)
+ 
 `r  propagree(4,df,mycutoff,respmax=4)` 
  
  **Free text comments on item 4**    
@@ -340,8 +346,12 @@ Various factors may hinder academic institutions' response to serious research
 misconduct. Please rate the following from 1 (not much of a hindrance) to 5 (substantial hindrance) 
 
 `r makemeanstab(myjisc,5,df,thisrow)`
-
+  
+  
 `r  propagree(5,df,mycutoff,respmax=5)` 
+
+**Agreement**: Overall, few items/ groups achieved 80% agreement (when rating scale collapsed to 3 categories), but the high rating of B (institutional COI) and the low rating of F  (vexatious complaints) did achieve 80% agreement among sleuths.
+
 
  **Free text comments on item 5**    
 
@@ -354,6 +364,8 @@ Please rate from 1 (little impact) to 5 (large impact)
 
 
 `r makemeanstab(myjisc,6,df,thisrow)`
+
+**Agreement**: Here 80% of group S agreed that a low probability of being detected/reported had a large impact, whereas 80% of group R and group O gave highest rating to "publish or perish" culture. 
 
 `r  propagree(6,df,mycutoff,respmax=5)` 
 
@@ -373,10 +385,12 @@ Table shows percentages selecting each option in each group.
 `r makecattab(myjisc,7,df,thisrow,c('predominantly','neither','speedy'))`
 
 
+**Agreement**: No option reached the criterion of 80% agreement, but there was a striking pattern of difference between group S and others, with only group S being largely positive.   
 
  **Free text comments on item 7**    
 
 `r mytext <- df$x17_7b_op; gatherfree(mytext)` 
+
 
 ## Reporting serious research misconduct   
 ### Item 8   
@@ -385,7 +399,7 @@ Table shows percentages selecting each option in each group.
 
 `r makecattab(myjisc,8,df,thisrow,c('Strongly agree','Moderately agree','Neither agree nor disagree','Moderately disagree','Strongly disagree'))`
 
-
+**Agreement**:  For all groups, the overall trend is to endorse this statement, but support is markedly stronger for Sleuths.  If we collapse A+B, then, sleuths have 96% agreement. 
 
  **Free text comments on item 8**    
 
@@ -404,9 +418,12 @@ regulatory role, but aims to ensure all institutions work to a common framework
 -->
 
 
-`r makemeanstab(myjisc,9,df,thisrow)`
+`r makemeanstab(myjisc,9,df,thisrow)`  
+
 
 `r  propagree(9,df,mycutoff,respmax=4)` 
+
+**Agreement**: There was no agreement on this item by any group - all options had some support.   
 
  **Free text comments on item 9**    
 
@@ -424,6 +441,7 @@ Table shows percentages selecting each option in each group.
 
 `r makecattab(myjisc,10,df,thisrow,c('Agree','Neutral','Disagree'))`
 
+**Agreement**: Endorsement of  'agree' was relatively high for all groups, but exceeded 80% only for group O.  
 
 
  **Free text comments on item 10**    
@@ -432,16 +450,10 @@ Table shows percentages selecting each option in each group.
 
 ### Item 11  
 Employers, funders and publishers of research should be legally required to share information to support investigations of serious research misconduct.  
-<!-- - A. Agree
-- B. Neutral
-- C. Disagree
--->
-Table shows percentages selecting each option in each group.  
-(For personalised report, * denotes the response you selected). 
 
 `r makecattab(myjisc,11,df,thisrow,c('Agree','Neutral','Disagree'))`
 
-
+**Agreement**: Pattern of responding was similar to item 10: general agreement with the statement, but less than 80% for groups S and R.
 
  **Free text comments on item 11**    
 
@@ -461,7 +473,10 @@ Rate the following options from 1 = most preferred, to 5 = least preferred
 
 `r makemeanstab(myjisc,12,df,thisrow)`
 
+  
 `r  propagree(12,df,mycutoff,respmax=5)` 
+
+**Agreement**: No item/group combination exceeded 80% agreement (with data collapsed to a 3-point scale)
 
  **Free text comments on item 12**    
 
@@ -480,8 +495,17 @@ It is not the responsibility of publishers or journal editors to determine wheth
 -->
 
 `r makemeanstab(myjisc,13,df,thisrow)`
-
+  
+  
 `r  propagree(13,df,mycutoff,respmax=5)` 
+
+**Agreement**: Some options re publishers got 80% agreement across all groups
+Notably: 
+-B: Publishers and Institutions work together  
+-D: Institution approach publisher when investigation finds severe res misconduct  
+-E: Publisher tells institution re author with repeated erroneous material  
+
+In addition, 80% of Group S agreed with A, re need for prompt retraction if serious errors that undermine confidence.  Much less agreement for that from Group R. 
 
  **Free text comments on item 13**    
 
@@ -498,6 +522,8 @@ Please rate your agreement with the following statements about whistleblowers fr
 -->
 
 `r makemeanstab(myjisc,14,df,thisrow)`
+
+**Agreement**: Responses veered in the general direction of agreement for all these subitems.  80% agreement achieved by Sleuths regarding disincentives to report serious research misconduct.  The Other group has 80% agreement on collateral damage concerns and whistleblower identity protection.
 
 `r  propagree(14,df,mycutoff,respmax=5)` 
 
@@ -518,6 +544,8 @@ Please give your rating from 1 = strongly disagree to 5 = strongly agree.*
 -->
 
 `r makemeanstab(myjisc,15,df,thisrow)`
+
+**Agreement**: Group S is keener on what may be seen as the more negative consequences for severe research misconduct; 80% endorsement for C and D (collapsed to 3 point scale).  They are less keen on options A and B - but there's less agreement there.
 
 `r  propagree(15,df,mycutoff,respmax=5)` 
 
@@ -550,6 +578,7 @@ Table shows percentages selecting each option in each group.
 
 `r makecattab(myjisc,17,df,thisrow,c('Agree','Neutral','Disagree'))`
 
+*Agreement*: This item did not divide the groups, but it also did not achieve 80% agreement.
 
 
  **Free text comments on item 17**    

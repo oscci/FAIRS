@@ -36,6 +36,8 @@ myf<-list.files()  #all files in working directory
 #this is myf[1] in test, but spell it out here
 thisf <- "cm46vj4fd001i1020aww1cwpy-analytics-uncoded-12-01-2025-2.csv"
 
+thisf <- "responses80.csv"
+
 df <- read.csv(thisf)
 myjisc <- read.csv('survey_template.csv')
 mypanel <- read.csv('From_MS_Forms.csv')
@@ -71,7 +73,16 @@ df<-df[order(df$group),] #order by group - easier to follow when listing free te
 
 ```
 
+```{r numformat,echo=F}
+#Format numbers so they have same n decimal places, even if zero at end
+#This returns a string
 
+numformat=function(mynum,ndecimals){
+  newnum <- format(round(mynum,ndecimals),nsmall=ndecimals)
+  return(newnum)
+}
+
+```
 ```{r gatherfreetext, echo=F}
 gatherfree <- function(mytext){
   mytext<-paste0(row.names(df),"_",df$group,") ",mytext)
@@ -144,9 +155,12 @@ makemeanstab <- function(myjisc,itemnum,df,thisrow){
      sdtab <- aggregate(df[,w[v]],by=list(df$group),FUN=sd,na.rm=T)
      
 
-     sumtab[v,2]<-paste0(round(meantab$x[1],2)," (",round(sdtab$x[1],2),")")
-     sumtab[v,3]<-paste0(round(meantab$x[2],2)," (",round(sdtab$x[2],2),")")
-     sumtab[v,4]<-paste0(round(meantab$x[3],2)," (",round(sdtab$x[3],2),")")
+     sumtab[v,2]<-paste0(numformat(meantab$x[1],2)," (",numformat(sdtab$x[1],2),")")
+     sumtab[v,3]<-paste0(numformat(meantab$x[2],2)," (",numformat(sdtab$x[2],2),")")
+     sumtab[v,4]<-paste0(numformat(meantab$x[3],2)," (",numformat(sdtab$x[3],2),")")
+     
+     
+    # sumtab[v,4]<-paste0(round(meantab$x[3],2)," (",round(sdtab$x[3],2),")")
      
      sumtab[v,1]<-paste0(LETTERS[v],") ",myjisc[itemnum,(7+v)])
      if(thisrow>0) {sumtab[v,5]<-df[thisrow,w[v]]}
@@ -185,7 +199,7 @@ makecattab <- function(myjisc,itemnum,df,thisrow,myterms){
     
     rawtab <- table(df[,w],df$group)
     sumtab <-as.data.frame.matrix(100*prop.table(rawtab,2))
-    sumtab <- round(sumtab,1)
+    sumtab <- numformat(sumtab,1)
     optnames <- unlist(as.vector(myjisc[itemnum,(7+(1:nrow(sumtab)))]))
     optnames <- paste0(LETTERS[1:nrow(sumtab)],") ",optnames)
     sumtab<-cbind(optnames,sumtab)
@@ -296,6 +310,7 @@ Table shows percentages selecting each option in each group
 ### Item 3    
 How harmful are the impacts of serious research misconduct to different segments of society? Please code as 1 (low harm) to 5 (strong harm)  
 
+(NB For all items rated on a 5-point scale, when computing agreement, a 3-point scale is used, with 1-2 collapsed and 4-5 collapsed).
 
  `r makemeanstab(myjisc,3,df,thisrow)`
 

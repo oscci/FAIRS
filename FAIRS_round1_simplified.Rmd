@@ -3,9 +3,16 @@ title: "FAIRS report, Round 1"
 author: "Dorothy V. M. Bishop"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 output:
-  word_document: default
+  word_document: 
+    reference_docx: word-styles-reference-01.docx
   html_document: null
 ---
+
+<!---  NB confidential files are on the external ExtremePro drive -->
+
+<!---  Use with masterloop.R to create multiple personal versions -->
+
+<!--- Updated 8 Feb 2025 to change numbering of free text comments-->
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -16,31 +23,34 @@ require(janitor)
 require(tidyr)
 library(stringr)
 require(flextable)
+require(explore) #not needed but helps to visualise data
+
 
 ```
+<!--- https://rmarkdown.rstudio.com/articles_docx.html for page numbers-->
 
-## Summary of FAIRS Survey, round 1
 
-This is a preliminary document to provide feedback to moderators from Round 1 of the FAIRS survey.  For background to the survey, please see the protocol here: <https://osf.io/mzjsh/>.  
-
-<!-- NOte that most text is generated from data, but the sections on Agreement were added after scrutinising the agreement tables.  May need modifying if more data comes in -->
 
 ```{r setupdata, echo=F}
-thisrow <- 1 #set to zero if no individualised data in report. Otherwise thisnumber specifies the row to be used in individualsed report
+#thisrow <- 1 #set to zero if no individualised data in report. Otherwise thisnumber specifies the row to be used in individualsed report
 
 #NEED THE UNCODED CSV
 
 #for testing: wanted file is just top file in list for nwo
-myf<-list.files()  #all files in working directory
+#myf<-list.files()  #all files in working directory
 #this is myf[1] in test, but spell it out here
-thisf <- "cm46vj4fd001i1020aww1cwpy-analytics-uncoded-12-01-2025-2.csv"
-
-thisf <- "responses95_redacted.csv"
+thisrow <- 0 #set to zero for generic report
+thisf <- "Round1/responses95_redacted.csv"
 
 df <- read.csv(thisf)
-myjisc <- read.csv('survey_template.csv')
-mypanel <- read.csv('From_MS_Forms.csv')
+myjisc <- read.csv('Round1/survey_template.csv')
+mypanel <- read.csv('Round1/From_MS_Forms.csv')
 signedup <- nrow(mypanel)
+
+myf<-list.files(pattern="report")
+thisrow<-length(myf)+1
+
+thisrow <- 0 #For generic report
 
 thispanel<-df[,2] #retain only those who completed the survey
 w<-which(mypanel$anonid %in% thispanel)
@@ -72,6 +82,13 @@ df<-df[order(df$group),] #order by group - easier to follow when listing free te
 
 ```
 
+## Summary of FAIRS Survey, round 1
+
+### Personalised report: `r df[thisrow,1]`
+
+This is a report to provide feedback to participants in Round 1 of the FAIRS survey.  For background to the survey, please see the protocol here: <https://osf.io/mzjsh/>.  
+
+
 ```{r numformat,echo=F}
 #Format numbers so they have same n decimal places, even if zero at end
 #This returns a string
@@ -83,16 +100,23 @@ numformat=function(mynum,ndecimals){
 
 ```
 ```{r gatherfreetext, echo=F}
+#modifications to numbering, so now sequential and randomised. V clunky
 gatherfree <- function(mytext){
-  mytext<-paste0(row.names(df),"_",df$group,") ",mytext)
+  mytext<-paste0(df$group,") ",mytext)
    f<-which(nchar(mytext)>8)
   text<-mytext[f]
+  #randomize
+  myft <- as.data.frame(text)
+  nurows<-sample(1:nrow(myft)) #random row order
+  myft <- as.data.frame(myft[nurows, ]) #make data frame called myft
+  myft <- as.data.frame(myft[order(myft[,1]),]) #order by group 
+  myft[,1]<-paste0(1:nrow(myft),"_",myft[,1]) #add numerical identifier for comment
 
    #str_replace_all(mytext, "[\r\n]" , ". ")
-
+names(myft)<-'Free text'
 # knitr::kable(mytext,escape=FALSE)
   set_flextable_defaults(font.size = 9)
-myft <- flextable(as.data.frame(text))
+myft <- flextable(as.data.frame(myft))
 myft <- set_table_properties(myft,layout="autofit")
 myft
 

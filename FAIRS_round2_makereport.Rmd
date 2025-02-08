@@ -39,10 +39,11 @@ thisrow <- 0
 #this is myf[1] in test, but spell it out here
 
 thisf <- "R2_responses_29.csv"
+thisf <- "round2/cm6gca0fd0099la08aoef5eq6-analytics-uncoded-08-02-2025.csv"
 
 df <- read.csv(thisf)
-myjisc <- read.csv('R2_survey_template.csv')
-mypanel <- read.csv('From_MS_Forms copy.csv')
+myjisc <- read.csv('round2/R2_survey_template.csv')
+mypanel <- read.csv('round2/From_MS_Forms copy.csv')
 signedup <- nrow(mypanel)
 
 myf<-list.files(pattern="report")
@@ -98,17 +99,25 @@ numformat=function(mynum,ndecimals){
 }
 
 ```
+
 ```{r gatherfreetext, echo=F}
+#modifications to numbering, so now sequential and randomised. V clunky
 gatherfree <- function(mytext){
-  mytext<-paste0(row.names(df),"_",df$group,") ",mytext)
+  mytext<-paste0(df$group,") ",mytext)
    f<-which(nchar(mytext)>8)
   text<-mytext[f]
+  #randomize
+  myft <- as.data.frame(text)
+  nurows<-sample(1:nrow(myft)) #random row order
+  myft <- as.data.frame(myft[nurows, ]) #make data frame called myft
+  myft <- as.data.frame(myft[order(myft[,1]),]) #order by group 
+  myft[,1]<-paste0(1:nrow(myft),"_",myft[,1]) #add numerical identifier for comment
 
    #str_replace_all(mytext, "[\r\n]" , ". ")
-
+names(myft)<-'Free text'
 # knitr::kable(mytext,escape=FALSE)
   set_flextable_defaults(font.size = 9)
-myft <- flextable(as.data.frame(text))
+myft <- flextable(as.data.frame(myft))
 myft <- set_table_properties(myft,layout="autofit")
 myft
 
@@ -271,7 +280,7 @@ Table shows percentages selecting each option in each group.
 - B. Serious research misconduct is becoming more prevalent and starting to pose a threat to the research literature 
 - C. Serious research misconduct is already common enough to pose a major threat to the research literature -->
 
-`r  propagree(2,df,mycutoff,respmax=5,thisrow)`  
+
 
 `r makecattab(myjisc,2,df,thisrow,c('rare','prevalent','common'),jisccodes)`
   
@@ -294,11 +303,11 @@ How harmful are the impacts of serious research misconduct to different segments
 ## Goals of those responding to serious research misconduct 
 ### Item 4    
 In responding to serious research misconduct, several goals may be considered. 
-Please rate how important each of these is, from 1 (unimportant) to 4 (very important) 
+Please rate how important each of these is, from 1 (unimportant) to 5 (very important) 
 
 
  
-**Agreement**: This table shows the percentage giving the highest rating (4).
+**Agreement**: This table shows the percentage giving the highest ratings (4-5).
  
 `r  propagree(4,df,mycutoff,respmax=5,thisrow,jisccodes)` 
  
@@ -342,7 +351,7 @@ Please rate the impact of the following from 1 = strongly negative to 5 = strong
 `r  propagree(7,df,mycutoff,respmax=5,thisrow,jisccodes)` 
 
 
-**Agreement**: No option reached the criterion of 80% agreement, but there was a striking pattern of difference between group S and others, with only group S being largely positive.   
+ 
 
  **Free text comments on item 7**    
 
@@ -366,7 +375,7 @@ Table shows percentages selecting each option in each group.
 ### Item 9  
 In an ideal world where resources are not an issue, which is the most suitable model/system for addressing serious research misconduct? 
 
-
+Rate these options where 1 = least preferred and 5 = most preferred.
 
 `r  propagree(9,df,mycutoff,respmax=4,thisrow,jisccodes)` 
 

@@ -38,13 +38,13 @@ thisrow <- 0
 #myf<-list.files()  #all files in working directory
 #this is myf[1] in test, but spell it out here
 
-thisf <- "R2_responses_29.csv"
-thisf <- "round2/cm6gca0fd0099la08aoef5eq6-analytics-uncoded-08-02-2025.csv"
+thisf <- "round2/Round2_final.csv"
+#thisf <- "round2/cm6gca0fd0099la08aoef5eq6-analytics-uncoded-08-02-2025.csv"
 
 df <- read.csv(thisf)
 myjisc <- read.csv('round2/R2_survey_template.csv')
 mypanel <- read.csv('round2/From_MS_Forms copy.csv')
-signedup <- nrow(mypanel)
+signedup <- 97 #this is all from Round 1 plus 2 extras
 
 myf<-list.files(pattern="report")
 thisrow<-length(myf)+1
@@ -82,7 +82,7 @@ df<-df[order(df$group),] #order by group - easier to follow when listing free te
 
 ```
 
-## Summary of FAIRS Survey, round 1
+## Summary of FAIRS Survey, round 2
 
 ### Personalised report: `r df[thisrow,1]`
 
@@ -229,9 +229,7 @@ propagree <- function(itemnum,df,cutoff,respmax,thisrow,jisccodes){
       ptab <- prop.table(thistab,2) #percentage of each response by group (2nd num indicates col percentage rather than row)
    
     agreetab[v,2:5]<-numformat(100*ptab[nrow(ptab),],1)
-    if(itemnum==9 || itemnum==12){
-      agreetab[v,2:5]<-numformat(100*ptab[1,],1) #lowest value for these two items represents agreement
-    }
+
     agreetab[v,1]<-paste0(LETTERS[v],") ",myjisc[itemnum,(7+v)])
     if(thisrow>0){
       agreetab[v,6]<-df[thisrow,w[v]]
@@ -377,7 +375,7 @@ In an ideal world where resources are not an issue, which is the most suitable m
 
 Rate these options where 1 = least preferred and 5 = most preferred.
 
-`r  propagree(9,df,mycutoff,respmax=4,thisrow,jisccodes)` 
+`r  propagree(9,df,mycutoff,respmax=5,thisrow,jisccodes)` 
 
 
  **Free text comments on item 9**    

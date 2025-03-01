@@ -1,6 +1,6 @@
 ---
 title: "FAIRS report, Round 2"
-author: "Dorothy V. M. Bishop"
+author: "created by: Dorothy V. M. Bishop"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 output:
   word_document: 
@@ -38,7 +38,7 @@ thisrow <- 0
 #myf<-list.files()  #all files in working directory
 #this is myf[1] in test, but spell it out here
 
-thisf <- "round2/Round2_final.csv"
+thisf <- "round2/Round2_final_redacted.csv"
 #thisf <- "round2/cm6gca0fd0099la08aoef5eq6-analytics-uncoded-08-02-2025.csv"
 
 df <- read.csv(thisf)
@@ -49,7 +49,7 @@ signedup <- 97 #this is all from Round 1 plus 2 extras
 myf<-list.files(pattern="report")
 thisrow<-length(myf)+1
 
-thisrow <- 0 #For generic report
+#thisrow <- 0 #For generic report
 
 thispanel<-df[,2] #retain only those who completed the survey
 w<-which(mypanel$anonid %in% thispanel)
@@ -63,7 +63,7 @@ jisccodes <- seq(3,37,2) #X Codes in JISC file corresponding to items
 names(df)<-substring(names(df),1,12) #shorten df names to 12 chars
 names(df)[2]<-'ID'
 
-df<-df[,-3]  # remove item that is just agreeing to take part.
+#df<-df[,-3]  # remove item that is just agreeing to take part.(Has been resaved since doing that, so now obsolete code)
 df<-clean_names(df)
 df <- df[-1,] #I think row 1 is me!
 ncases <- nrow(df)
@@ -94,8 +94,11 @@ This is a report to provide feedback to participants in Round 2 of the FAIRS sur
 #This returns a string
 
 numformat=function(mynum,ndecimals){
-
+#NB this is applied to a vector of numbers
   newnum <- format(round(mynum,ndecimals),nsmall=ndecimals)
+  w<-which(newnum=='100.0')
+  if(length(w)>0){
+  newnum[w]<-'100'}
   
   return(newnum)
 }
@@ -139,7 +142,7 @@ myft
 
 Those responding Other were given the option to give more description of their background, and responded as follows:
 
-**Free text comments on item 1**  
+**Further details of those in 'other' group**  
 `r mytext <- df$x4_if_you_r; gatherfree(mytext)`
    
      
@@ -200,7 +203,9 @@ makecattab <- function(myjisc,itemnum,df,thisrow,myterms,jisccodes){
 
   
   myft <- flextable(as.data.frame(sumtab))
+  if(thisrow==0){
   myft <- addhighlight(myft)
+  }
   
 myft <- set_table_properties(myft,layout="autofit")
 myft
@@ -212,17 +217,35 @@ addhighlight <- function(myft){
   cutoff1 <- 70 #setting cutoff dynamically doesn't work for some reason, so they are hard coded below
   cutoff2 <- 50
   color1 <- 'red'
-  color2 <- 'lightgray'
+  color2 <-'pink'
+  color3 <- 'lightblue'
+  color4 <- 'cornflowerblue'
 
+#This miscodes any row with 100 in it.  I think this has to do with values being text rather than numeric, (for formatting purposes) but various attempts to fix it have failed.  
+
+  myft <- highlight(myft, j = 2, i = ~ `1_S` > 49.999, color = color2)
+    myft <- highlight(myft, j = 2, i = ~ `1_S` > 70.0, color = color1)
+  myft <- highlight(myft, j = 2, i = ~ `1_S` < 50.0, color = color3)
+  myft <- highlight(myft, j = 2, i = ~ `1_S` < 30.0, color = color4)
+
+
+  myft <- highlight(myft, j = 3, i = ~ `2_R` > 49.999, color = color2)
+    myft <- highlight(myft, j = 3, i = ~ `2_R` > 70.0, color = color1)
+  myft <- highlight(myft, j = 3, i = ~ `2_R` < 50.0, color = color3)
+  myft <- highlight(myft, j = 3, i = ~ `2_R` < 30.0, color = color4)
   
-  myft <- highlight(myft, j = 2, i = ~ `1_S` > 70, color = color1)
-  myft <- highlight(myft, j = 2, i = ~ `1_S` < 50, color = color2)
-  myft <- highlight(myft, j = 3, i = ~ `2_R` > 70, color = color1)
-  myft <- highlight(myft, j = 3, i = ~ `2_R` < 50, color = color2)
-  myft <- highlight(myft, j = 4, i = ~ `3_O` > 70, color = color1)
-  myft <- highlight(myft, j = 4, i = ~ `3_O` < 50, color = color2)
-  myft <- highlight(myft, j = 5, i = ~ All > 70, color = color1)
-  myft <- highlight(myft, j = 5, i = ~ All < 50, color = color2)
+  
+  
+    myft <- highlight(myft, j = 4, i = ~ `3_O` > 49.999, color = color2)
+      myft <- highlight(myft, j = 4, i = ~ `3_O` > 70.0, color = color1)
+  myft <- highlight(myft, j = 4, i = ~ `3_O` < 50.0, color = color3)
+  myft <- highlight(myft, j = 4, i = ~ `3_O` < 30.0, color = color4)
+ 
+    myft <- highlight(myft, j = 5, i = ~ All > 49.999, color = color2)
+  myft <- highlight(myft, j = 5, i = ~ All > 70.0, color = color1)
+  myft <- highlight(myft, j = 5, i = ~ All < 50.0, color = color3)
+  myft <- highlight(myft, j = 5, i = ~ All < 30.0, color = color4)
+
 return(myft)
 } 
 ```
@@ -283,7 +306,10 @@ propagree <- function(itemnum,df,cutoff,respmax,thisrow,jisccodes){
        agreetab[1,1]<-'Moderately/strongly agree'
      }
     myft <- flextable(as.data.frame(agreetab))
-    myft <- addhighlight(myft)
+    if(thisrow==0){
+    myft <- addhighlight(myft) #Colour coding just for base report
+    #This is in part because of glitch when response is 100% that makes the colours go wrong
+    }
     myft <- set_table_properties(myft,layout="autofit")
     myft
 }
@@ -305,6 +331,10 @@ The bulk of respondents were from Europe or N America:
 For each item, responses are shown by subgroup, where 1 = S(leuths), 2 = R(esearch Integrity Officers) and 3 = O(ther).  For simple multiple choice items, the table shows percentages in each group with a given response.   
 In addition, for items with several subitems, the percentage with agreement/strong agreement is shown for each subitem.  
 
+In Round 2, illustrative free text comments from Round 1 were selected to provide context for respondents. To see these and the full text of the Round 2 survey, please follow this link: https://osf.io/k9maf. 
+
+Additional free text comments by panel members from Round 2 are included in this report.  these include a letter denoting the subgroup of the respondent, but the associated numerical codes are randomised for each item, so the number doesnot correspond to a specific individual.  
+
 N.B. Each panel member receives an individualised version of this report that either includes a column showing which response they gave, or has * denoting their selection, depending on the item type. 
 
 
@@ -313,12 +343,11 @@ N.B. Each panel member receives an individualised version of this report that ei
 
 
 ## Burdens of serious research misconduct 
-### Item 2       
-How common is the problem of serious research misconduct? (select one).
+### Item 2: How common is the problem of serious research misconduct? 
 Table shows percentages selecting each option in each group. NB For this item, the options are mutually exclusive. 
-To make it easier to detect agreement/disagreement, values above 70% have red background, and those below 50% have a grey background.  
+<!--To make it easier to detect agreement/disagreement, values above 70% have red background, and those below 50% have a grey background.  
 
-NB!!! FOR SOME REASON THIS DOESN'T WORK IF THE ROW HAS A VALUE OF 100% IN IT. THESE NEED MANUALLY CORRECTING.
+NB!!! FOR SOME REASON THIS DOESN'T WORK IF THE ROW HAS A VALUE OF 100% IN IT. THESE NEED MANUALLY CORRECTING.-->
 
 
 (For personalised reports, * denotes your response).
@@ -336,9 +365,9 @@ NB!!! FOR SOME REASON THIS DOESN'T WORK IF THE ROW HAS A VALUE OF 100% IN IT. TH
 
 `r mytext <- df$x6_2b_opt; gatherfree(mytext)` 
 
-### Item 3    
-How harmful are the impacts of serious research misconduct to different segments of society? Please code as 1 (low harm) to 5 (strong harm).  
-*For all items using 5-point scale, the summary table shows the percentage selecting option 4 or 5.*  
+### Item 3: How harmful are the impacts of serious research misconduct to different segments of society? 
+Please code as 1 (low harm) to 5 (strong harm).  
+*For items using 5-point scale, the summary table shows the percentage selecting option 4 or 5.*  
 
 
 `r  propagree(3,df,mycutoff,respmax=5,thisrow,jisccodes)`  
@@ -349,13 +378,10 @@ How harmful are the impacts of serious research misconduct to different segments
 `r mytext <- df$x8_3b_opt; gatherfree(mytext)` 
 
 ## Goals of those responding to serious research misconduct 
-### Item 4    
-In responding to serious research misconduct, several goals may be considered. 
-Please rate how important each of these is, from 1 (unimportant) to 5 (very important) 
+### Item 4: In responding to serious research misconduct, several goals may be considered. 
+Please rate how important each of these is, from 1 (unimportant) to 5 (very important).  
 
-
- 
-**Agreement**: This table shows the percentage giving the highest ratings (4-5).
+This table shows the percentage giving the highest ratings (4-5).
  
 `r  propagree(4,df,mycutoff,respmax=5,thisrow,jisccodes)` 
  
@@ -364,9 +390,8 @@ Please rate how important each of these is, from 1 (unimportant) to 5 (very impo
 `r mytext <- df$x10_4b_op; gatherfree(mytext)` 
 
 ## Factors hindering academic institutions' response to serious research misconduct 
-### Item 5   
-Various factors may hinder academic institutions' response to serious research 
-misconduct. Please rate the following from 1 (not much of a hindrance) to 5 (substantial hindrance) 
+### Item 5: Various factors may hinder academic institutions' response to serious research misconduct. 
+Please rate the following from 1 (not much of a hindrance) to 5 (substantial hindrance) 
 
   
 `r  propagree(5,df,mycutoff,respmax=5,thisrow,jisccodes)` 
@@ -376,13 +401,13 @@ misconduct. Please rate the following from 1 (not much of a hindrance) to 5 (sub
 
 `r mytext <- df$x12_5b_op; gatherfree(mytext)` 
 
+
 ## Factors driving serious research misconduct 
-### Item 6   
-What is the impact of these factors in encouraging researchers to commit serious research misconduct? 
+### Item 6: What is the impact of these factors in encouraging researchers to commit serious research misconduct? 
 Please rate from 1 (little impact) to 5 (large impact) 
 
 
-\pagebreak
+
 
 
 `r  propagree(6,df,mycutoff,respmax=5,thisrow,jisccodes)` 
@@ -392,9 +417,8 @@ Please rate from 1 (little impact) to 5 (large impact)
 `r mytext <- df$x14_6b_op; gatherfree(mytext)` 
 
 ## Role of post-publication peer review
-### Item 7  
-Please rate the impact of the following from 1 = strongly negative to 5 = strongly positive in drawing attention to serious academic misconduct
-
+### Item 7: Please rate the impact of the following from 1 = strongly negative to 5 = strongly positive in drawing attention to serious academic misconduct
+Percentage rating 4-5.
 
 `r  propagree(7,df,mycutoff,respmax=5,thisrow,jisccodes)` 
 
@@ -407,10 +431,8 @@ Please rate the impact of the following from 1 = strongly negative to 5 = strong
 
 
 ## Reporting serious research misconduct   
-### Item 8   
-Official channels for reporting misconduct seldom work efficiently (select one option).   
-Table shows percentages selecting each option in each group.  
-(For personalised reports, * denotes your response).
+### Item 8: Official channels for reporting misconduct seldom work efficiently   
+Table shows percentages selecting agree/strongly agree.
 
 
 `r  propagree(8,df,mycutoff,respmax=5,thisrow,jisccodes)`
@@ -421,11 +443,8 @@ Table shows percentages selecting each option in each group.
 `r mytext <- df$x18_8b_op; gatherfree(mytext)` 
 
 ## Models for addressing serious research misconduct 
-### Item 9  
-In an ideal world where resources are not an issue, which is the most suitable model/system for addressing serious research misconduct? 
-
-Rate these options where 1 = least preferred and 5 = most preferred.
-
+### Item 9: In an ideal world where resources are not an issue, which is the most suitable model/system for addressing serious research misconduct? 
+Percentages responding 4-5 (preferred/strongly preferred)  
 `r  propagree(9,df,mycutoff,respmax=5,thisrow,jisccodes)` 
 
 
@@ -434,27 +453,24 @@ Rate these options where 1 = least preferred and 5 = most preferred.
 `r mytext <- df$x20_9b_op; gatherfree(mytext)` 
 
 ## Role of employers
-### Item 10  
-Prospective employers should undertake rigorous due diligence and, as far as
-possible, check with previous employers to ask if there have been any investigations into serious research misconduct.  
+### Item 10: Prospective employers should undertake rigorous due diligence and, as far as possible, check with previous employers to ask if there have been any investigations into serious research misconduct.  
 
-
+Response options are mutually exclusive.  
 Table shows percentages selecting each option in each group.  
 (For personalised reports, * denotes your response).  
 
 `r makecattab(myjisc,10,df,thisrow,c('Agree, regardless of outcome','Agree, if misconduct confirmed','Neutral','Disagree','Strongly disagree'),jisccodes)`
 
-**Agreement**: Endorsement of  'agree' was relatively high for all groups, but exceeded 80% only for group O.  
 
 
  **Free text comments on item 10**    
 
 `r mytext <- df$x22_10b_o; gatherfree(mytext)` 
 
-### Item 11  
-Employers, funders and publishers of research should be legally required to share information to support investigations of serious research misconduct.  
-Table shows percentage selecting each option.  
-(For personalised reports, * denotes your response).  
+\pagebreak
+
+### Item 11: Employers, funders and publishers of research should be legally required to share information to support investigations of serious research misconduct.  
+Table shows percentage selecting 4-5 (agree/strongly agree) 
 
 
 `r  propagree(11,df,mycutoff,respmax=5,thisrow,jisccodes)`
@@ -464,24 +480,21 @@ Table shows percentage selecting each option.
 `r mytext <- df$x24_11b_o; gatherfree(mytext)` 
 
 ## Solutions to serious research misconduct
-### Item 12  
-Given that we have finite resources, which solutions to serious research misconduct should be prioritised in funding?
-Rate the following options from 1 = most preferred, to 5 = least preferred 
+### Item 12: Given that we have finite resources, which solutions to serious research misconduct should be prioritised in funding?
 
-
- **Agreement**: No item/group combination exceeded 80% agreement (with data collapsed to a 3-point scale). This table shows percentage rating 1-2 (i.e. most preferred).
+Table shows percentage rating 4-5 (i.e. effective/highly effective).
 `r  propagree(12,df,mycutoff,respmax=5,thisrow,jisccodes)` 
 
-
+\pagebreak
 
  **Free text comments on item 12**    
 
 `r mytext <- df$x26_12b_o; gatherfree(mytext)` 
+\pagebreak
 
 ## Role of publishers  
-### Item 13 
-Publishers and their journal editors are responsible for ensuring the literature is decontaminated from erroneous work promptly. Please rate the following statements in accordance with your views on how this should work, from 1 = strongly disagree to 5 = strongly agree. 
-  
+### Item 13: Publishers and their journal editors are responsible for ensuring the literature is decontaminated from erroneous work promptly. 
+Table shows percentage rating 4-5 (i.e. agree/strongly agree) with the subitem.
  
 
 `r  propagree(13,df,mycutoff,respmax=5,thisrow,jisccodes)` 
@@ -491,10 +504,9 @@ Publishers and their journal editors are responsible for ensuring the literature
 `r mytext <- df$x28_13b_o; gatherfree(mytext)`
 
 ## Whistleblowers and bystanders  
-### Item 14  
-Please rate your agreement with the following statements about whistleblowers from 1 = strongly disagree to 5 = strongly agree  
+### Item 14: Please rate your agreement with the following statements about whistleblowers from 1 = strongly disagree to 5 = strongly agree  
 
-
+Table shows percentage rating 4-5 (agree/strongly agree).
 
 `r  propagree(14,df,mycutoff,respmax=5,thisrow,jisccodes)` 
 
@@ -502,11 +514,12 @@ Please rate your agreement with the following statements about whistleblowers fr
 
 `r mytext <- df$x30_14b_o; gatherfree(mytext)`
 
-## When serious research misconduct is confirmed  
-### Item 15  
-Which of these practices should be options for institutions when serious research misconduct is confirmed.
-Please give your rating from 1 = strongly disagree to 5 = strongly agree.
+\pagebreak
 
+## When serious research misconduct is confirmed  
+### Item 15: Which of these practices should be options for institutions when serious research misconduct is confirmed?
+
+Table shows percentages responding 4-5 (agree/strongly agree)
 
 
 `r  propagree(15,df,mycutoff,respmax=5,thisrow,jisccodes)` 
@@ -516,18 +529,22 @@ Please give your rating from 1 = strongly disagree to 5 = strongly agree.
 `r mytext <- df$x32_15b_o; gatherfree(mytext)`
 
 ## Unintended consequences/barriers to progress  
-### Item 16  
-Please rate your agreement with the following statements about unintended consequences/barriers to progress from 1 = strongly disagree to 5 = strongly agree  
+### Item 16: Please rate your agreement with the following statements about unintended consequences/barriers to progress
+Percentage rating 4-5 (agree/strongly agree)
 
 
 `r  propagree(16,df,mycutoff,respmax=5,thisrow,jisccodes)` 
-
+\pagebreak
  **Free text comments on item 16**    
 
 `r mytext <- df$x34_16b_o; gatherfree(mytext)`
 
-### Item 17  
- How interested would you be in having discussion of the following topics at the in-person meeting in April?  Rate from 1 = not at all interested to 5 = strongly interested
+\pagebreak
+
+### Item 17:  How interested would you be in having discussion of the following topics at the in-person meeting in April?  
+Percentage rating 4-5 (interested/strongly interested)
+
+N.B. We plan parallel discussion sessions, so a topic does not need strong level of interest from everyone to be included.  
 
 
 `r  propagree(17,df,mycutoff,respmax=5,thisrow,jisccodes)` 
@@ -536,10 +553,7 @@ Please rate your agreement with the following statements about unintended conseq
 
 `r mytext <- df$x36_17b_o; gatherfree(mytext)`
 
-\pagebreak
 
-## Final thoughts   
-**Free text comments: final thoughts**  
-`r mytext <- df$x39_any_oth; gatherfree(mytext)`  
+
 
 

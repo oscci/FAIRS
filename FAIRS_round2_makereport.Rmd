@@ -12,6 +12,8 @@ output:
 
 <!---  Use with masterloop.R to create multiple personal versions -->
 
+<!---  Added some changes to double check report ordering matches -->
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 require(tidyverse)
@@ -37,19 +39,23 @@ thisrow <- 0
 #for testing: wanted file is just top file in list for nwo
 #myf<-list.files()  #all files in working directory
 #this is myf[1] in test, but spell it out here
-
+set.seed(1) #for reproducible randomisation
 thisf <- "round2/Round2_final_redacted.csv"
 #thisf <- "round2/cm6gca0fd0099la08aoef5eq6-analytics-uncoded-08-02-2025.csv"
 
 df <- read.csv(thisf)
 myjisc <- read.csv('round2/R2_survey_template.csv')
 mypanel <- read.csv('round2/From_MS_Forms copy.csv')
+reportorder <- read.csv('reportOrder_round2.csv') #this should be blank file to start with, just with headers - we add to it with each created report
 signedup <- 97 #this is all from Round 1 plus 2 extras
 
+#THIS WILL CREATE ORDERED NUMBERED REPORTS
 myf<-list.files(pattern="report")
 thisrow<-length(myf)+1
+##############
 
-#thisrow <- 0 #For generic report
+#OR SPECIFY ROW HERE: ZERO FOR GENERIC
+thisrow <- 0 #For generic report set to zero
 
 thispanel<-df[,2] #retain only those who completed the survey
 w<-which(mypanel$anonid %in% thispanel)
@@ -65,7 +71,7 @@ names(df)[2]<-'ID'
 
 #df<-df[,-3]  # remove item that is just agreeing to take part.(Has been resaved since doing that, so now obsolete code)
 df<-clean_names(df)
-df <- df[-1,] #I think row 1 is me!
+
 ncases <- nrow(df)
 #df[1:ncases,1]<-NA
 
@@ -76,7 +82,7 @@ df$group<-as.factor(df$group)
 levels(df$group)<-c('1_S','2_R','3_O')
 
 
-df<-df[order(df$group),] #order by group - easier to follow when listing free text responses
+#df<-df[order(df$group),] #order by group - easier to follow when listing free text responses
 
 
 
@@ -86,6 +92,7 @@ df<-df[order(df$group),] #order by group - easier to follow when listing free te
 
 ### Personalised report: `r df[thisrow,1]`
 
+`r reportorder<-rbind(reportorder,df[thisrow,1:3])`
 This is a report to provide feedback to participants in Round 2 of the FAIRS survey.  For background to the survey, please see the protocol here: <https://osf.io/mzjsh/>.  
 
 
@@ -106,19 +113,25 @@ numformat=function(mynum,ndecimals){
 ```
 
 ```{r gatherfreetext, echo=F}
-#modifications to numbering, so now sequential and randomised. V clunky
-gatherfree <- function(mytext){
-  mytext<-paste0(df$group,") ",mytext)
-   f<-which(nchar(mytext)>8)
-  text<-mytext[f]
-  #randomize
-  myft <- as.data.frame(text)
-  nurows<-sample(1:nrow(myft)) #random row order
-  myft <- as.data.frame(myft[nurows, ]) #make data frame called myft
-  myft <- as.data.frame(myft[order(myft[,1]),]) #order by group 
-  myft[,1]<-paste0(1:nrow(myft),"_",myft[,1]) #add numerical identifier for comment
+#modifications to numbering
+#Item number is first digit, then group, then seq random number
+gatherfree <- function(myitem,mytext){
+ #First shuffle order
+  randnums<-sample(1:length(mytext))
 
-   #str_replace_all(mytext, "[\r\n]" , ". ")
+  #create prefix
+  mytextc1<-paste0(myitem,"_",substr(df$group[randnums],3,3),"_")
+
+  mytextc2<-mytext[randnums]  #and for text
+  myo<-order(mytextc1,decreasing=TRUE)  #re-sort to keep all the groups together, group S first
+  mytextc1<-mytextc1[myo]
+  mytextc2<-mytextc2[myo]
+  mykeep <- which(nchar(mytextc2)>1)
+
+  mytextcd <- paste0(mytextc1[mykeep],1:length(mykeep),") ",mytextc2[mykeep])
+  
+  myft<-as.data.frame(mytextcd)
+
 names(myft)<-'Free text'
 # knitr::kable(mytext,escape=FALSE)
   set_flextable_defaults(font.size = 9)
@@ -143,7 +156,7 @@ myft
 Those responding Other were given the option to give more description of their background, and responded as follows:
 
 **Further details of those in 'other' group**  
-`r mytext <- df$x4_if_you_r; gatherfree(mytext)`
+`r mytext <- df$x4_if_you_r; gatherfree(0, mytext)`
    
      
      
@@ -216,10 +229,10 @@ myft
 addhighlight <- function(myft){
   cutoff1 <- 70 #setting cutoff dynamically doesn't work for some reason, so they are hard coded below
   cutoff2 <- 50
-  color1 <- 'red'
-  color2 <-'pink'
-  color3 <- 'lightblue'
-  color4 <- 'cornflowerblue'
+  color4 <- 'red'
+  color3 <-'pink'
+  color2 <- 'lightblue'
+  color1 <- 'cornflowerblue'
 
 #This miscodes any row with 100 in it.  I think this has to do with values being text rather than numeric, (for formatting purposes) but various attempts to fix it have failed.  
 
@@ -363,7 +376,7 @@ NB!!! FOR SOME REASON THIS DOESN'T WORK IF THE ROW HAS A VALUE OF 100% IN IT. TH
 
 **Free text comments on item 2**    
 
-`r mytext <- df$x6_2b_opt; gatherfree(mytext)` 
+`r mytext <- df$x6_2b_opt; gatherfree(2,mytext)` 
 
 ### Item 3: How harmful are the impacts of serious research misconduct to different segments of society? 
 Please code as 1 (low harm) to 5 (strong harm).  
@@ -375,7 +388,7 @@ Please code as 1 (low harm) to 5 (strong harm).
 
 **Free text comments on item 3**    
 
-`r mytext <- df$x8_3b_opt; gatherfree(mytext)` 
+`r mytext <- df$x8_3b_opt; gatherfree(3,mytext)` 
 
 ## Goals of those responding to serious research misconduct 
 ### Item 4: In responding to serious research misconduct, several goals may be considered. 
@@ -387,7 +400,7 @@ This table shows the percentage giving the highest ratings (4-5).
  
  **Free text comments on item 4**    
 
-`r mytext <- df$x10_4b_op; gatherfree(mytext)` 
+`r mytext <- df$x10_4b_op; gatherfree(4,mytext)` 
 
 ## Factors hindering academic institutions' response to serious research misconduct 
 ### Item 5: Various factors may hinder academic institutions' response to serious research misconduct. 
@@ -399,7 +412,7 @@ Please rate the following from 1 (not much of a hindrance) to 5 (substantial hin
 
  **Free text comments on item 5**    
 
-`r mytext <- df$x12_5b_op; gatherfree(mytext)` 
+`r mytext <- df$x12_5b_op; gatherfree(5,mytext)` 
 
 
 ## Factors driving serious research misconduct 
@@ -414,7 +427,7 @@ Please rate from 1 (little impact) to 5 (large impact)
 
  **Free text comments on item 6**    
 
-`r mytext <- df$x14_6b_op; gatherfree(mytext)` 
+`r mytext <- df$x14_6b_op; gatherfree(6,mytext)` 
 
 ## Role of post-publication peer review
 ### Item 7: Please rate the impact of the following from 1 = strongly negative to 5 = strongly positive in drawing attention to serious academic misconduct
@@ -427,7 +440,7 @@ Percentage rating 4-5.
 
  **Free text comments on item 7**    
 
-`r mytext <- df$x16_7b_op; gatherfree(mytext)` 
+`r mytext <- df$x16_7b_op; gatherfree(7,mytext)` 
 
 
 ## Reporting serious research misconduct   
@@ -440,7 +453,7 @@ Table shows percentages selecting agree/strongly agree.
  **Free text comments on item 8**    
  
 
-`r mytext <- df$x18_8b_op; gatherfree(mytext)` 
+`r mytext <- df$x18_8b_op; gatherfree(8,mytext)` 
 
 ## Models for addressing serious research misconduct 
 ### Item 9: In an ideal world where resources are not an issue, which is the most suitable model/system for addressing serious research misconduct? 
@@ -450,7 +463,7 @@ Percentages responding 4-5 (preferred/strongly preferred)
 
  **Free text comments on item 9**    
 
-`r mytext <- df$x20_9b_op; gatherfree(mytext)` 
+`r mytext <- df$x20_9b_op; gatherfree(9,mytext)` 
 
 ## Role of employers
 ### Item 10: Prospective employers should undertake rigorous due diligence and, as far as possible, check with previous employers to ask if there have been any investigations into serious research misconduct.  
@@ -459,13 +472,13 @@ Response options are mutually exclusive.
 Table shows percentages selecting each option in each group.  
 (For personalised reports, * denotes your response).  
 
-`r makecattab(myjisc,10,df,thisrow,c('Agree, regardless of outcome','Agree, if misconduct confirmed','Neutral','Disagree','Strongly disagree'),jisccodes)`
+`r makecattab(myjisc,10,df,thisrow,myterms<-c('Agree, regardless of outcome of investigation','Agree, but only if investigation found evidence of serious research misconduct','Neutral','Disagree','Strongly disagree'),jisccodes)`
 
 
 
  **Free text comments on item 10**    
 
-`r mytext <- df$x22_10b_o; gatherfree(mytext)` 
+`r mytext <- df$x22_10b_o; gatherfree(10,mytext)` 
 
 \pagebreak
 
@@ -477,7 +490,7 @@ Table shows percentage selecting 4-5 (agree/strongly agree)
 
  **Free text comments on item 11**    
 
-`r mytext <- df$x24_11b_o; gatherfree(mytext)` 
+`r mytext <- df$x24_11b_o; gatherfree(11,mytext)` 
 
 ## Solutions to serious research misconduct
 ### Item 12: Given that we have finite resources, which solutions to serious research misconduct should be prioritised in funding?
@@ -489,7 +502,7 @@ Table shows percentage rating 4-5 (i.e. effective/highly effective).
 
  **Free text comments on item 12**    
 
-`r mytext <- df$x26_12b_o; gatherfree(mytext)` 
+`r mytext <- df$x26_12b_o; gatherfree(12,mytext)` 
 \pagebreak
 
 ## Role of publishers  
@@ -501,7 +514,7 @@ Table shows percentage rating 4-5 (i.e. agree/strongly agree) with the subitem.
 
  **Free text comments on item 13**    
 
-`r mytext <- df$x28_13b_o; gatherfree(mytext)`
+`r mytext <- df$x28_13b_o; gatherfree(13,mytext)`
 
 ## Whistleblowers and bystanders  
 ### Item 14: Please rate your agreement with the following statements about whistleblowers from 1 = strongly disagree to 5 = strongly agree  
@@ -512,7 +525,7 @@ Table shows percentage rating 4-5 (agree/strongly agree).
 
  **Free text comments on item 14**    
 
-`r mytext <- df$x30_14b_o; gatherfree(mytext)`
+`r mytext <- df$x30_14b_o; gatherfree(14,mytext)`
 
 \pagebreak
 
@@ -526,7 +539,7 @@ Table shows percentages responding 4-5 (agree/strongly agree)
 
  **Free text comments on item 15**    
 
-`r mytext <- df$x32_15b_o; gatherfree(mytext)`
+`r mytext <- df$x32_15b_o; gatherfree(15,mytext)`
 
 ## Unintended consequences/barriers to progress  
 ### Item 16: Please rate your agreement with the following statements about unintended consequences/barriers to progress
@@ -537,7 +550,7 @@ Percentage rating 4-5 (agree/strongly agree)
 \pagebreak
  **Free text comments on item 16**    
 
-`r mytext <- df$x34_16b_o; gatherfree(mytext)`
+`r mytext <- df$x34_16b_o; gatherfree(16,mytext)`
 
 \pagebreak
 
@@ -551,9 +564,9 @@ N.B. We plan parallel discussion sessions, so a topic does not need strong level
 
  **Free text comments on item 17**    
 
-`r mytext <- df$x36_17b_o; gatherfree(mytext)`
+`r mytext <- df$x36_17b_o; gatherfree(17,mytext)`
 
-
+`r write.csv(reportorder,'reportOrder_round2.csv',row.names=F)`
 
 
 

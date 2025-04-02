@@ -1,0 +1,101 @@
+---
+title: "Fairs Attendee List"
+format: html
+editor: visual
+---
+
+## 
+
+```{r packages, results='hide',echo=FALSE, warning=FALSE, message=FALSE}
+
+require(tidyverse)
+require(flextable)
+
+```
+
+```{r comparelists, echo=FALSE, warning=FALSE}
+
+readdir <- "/Volumes/Extreme_Pro/_FAIRS attendees/"
+listA <- paste0(readdir,'namesonly.csv')
+registered <- read.csv(listA)
+
+ w<-which(registered$Surname == 'Naeve')
+ registered$Surname[w]<-'Neave'  #misspelt! Now correct in namesonly file
+
+
+
+listB <- paste0(readdir,"FAIRS Discussion topics(1-122).csv")
+formdone <- read.csv(listB)
+formdone <- formdone[-(1:3),]
+
+registered<-registered[order(registered$Surname),]
+formdone <- formdone[order(formdone$Surname),]
+registered$form <-0
+
+for (i in 1:nrow(registered)){
+  if(registered$Surname[i] %in% formdone$Surname)
+  {registered$form[i]<-1}
+}
+
+#base file on formdone and just add names for those who have no form!
+
+rows_noform_online<-intersect(which(registered$form==0),which(registered$Ticket=='Online'))
+rows_noform_inperson<-intersect(which(registered$form==0),which(registered$Ticket!='Online'))
+
+formdone$Name<-paste0(formdone$Surname,", ",formdone$First..given..name)
+w<-which(nchar(formdone[,14])>0)
+formdone[w,14]<-paste0('. Other: ',formdone[w,14])
+formdone[,13]<-paste0(formdone[,13],formdone[,14])
+wantcols<-c(5,11,12,13)
+
+online<-formdone[formdone$I.am.attending.the.meeting=='Online',wantcols]
+inperson<-formdone[formdone$I.am.attending.the.meeting!='Online',wantcols]
+
+#ONLINE: now add those with no form
+
+nrowo1<-nrow(online)+1
+nrowo2 <-nrow(online)+length(rows_noform_online)
+online[nrowo1:nrowo2,]<-NA
+online$Name[nrowo1:nrowo2]<-registered$Name[rows_noform_online]
+
+online<-online[order(online$Name),]
+
+
+#INPERSON: now add those with no form
+
+nrowo1<-nrow(inperson)+1
+nrowo2 <-nrow(inperson)+length(rows_noform_inperson)
+inperson[nrowo1:nrowo2,]<-NA
+inperson$Name[nrowo1:nrowo2]<-registered$Name[rows_noform_inperson]
+
+inperson<-inperson[order(inperson$Name),]
+
+
+```
+
+## In person
+
+```{r createtext, echo=FALSE}
+  myft <- flextable(inperson)
+
+  
+myft <- set_table_properties(myft,layout="autofit")
+myft
+
+
+
+```
+
+## Online
+
+```{r createonlinelist, echo=FALSE}
+
+  myft <- flextable(online)
+
+  
+myft <- set_table_properties(myft,layout="autofit")
+myft
+
+
+
+```

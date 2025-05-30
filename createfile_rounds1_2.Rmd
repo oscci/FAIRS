@@ -1,0 +1,665 @@
+---
+title: "FAIRS report, Round 1"
+author: "Dorothy V. M. Bishop"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  word_document: 
+    reference_docx: word-styles-reference-01.docx
+  html_document: null
+---
+
+<!---  NB confidential files are on the external ExtremePro drive -->
+
+<!---  Use with masterloop.R to create multiple personal versions -->
+
+<!--- Updated 8 Feb 2025 to change numbering of free text comments-->
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+require(tidyverse)
+require(viridis)
+require(here)
+require(janitor)
+require(tidyr)
+library(stringr)
+require(flextable)
+require(explore) #not needed but helps to visualise data
+
+
+```
+<!--- https://rmarkdown.rstudio.com/articles_docx.html for page numbers-->
+
+
+
+```{r setupdata, echo=F}
+#thisrow <- 1 #set to zero if no individualised data in report. Otherwise thisnumber specifies the row to be used in individualsed report
+
+#NEED THE UNCODED CSV
+
+thisf <- "Round1/responses95_redacted.csv"
+df <- read.csv(thisf)
+#sort col2 alphabetically
+df <- df[order(df[,2]),]
+
+#rename col for group (col 91)
+names(df)[91]<-'group'
+df$group<-as.factor(df$group)
+levels(df$group)<-c('1_S','2_R','3_O')
+
+#nums1 <- which(sapply(df, is.integer)) #original code to find integer cols with responses - this misses some multiple choice items so now hard coded
+nums1 <- c(6, 7, 8, 10, 13, 14, 15, 16, 17, 20, 21, 22, 23, 26, 27, 28, 29, 30, 31, 32, 33, 34, 37, 38, 39, 40, 42, 44, 47, 48, 49, 50, 52, 54, 57, 58, 59, 60, 61, 64, 65, 66, 67, 68, 69, 72, 73, 74, 75, 78, 79, 80, 81, 84, 85, 86, 87, 89)
+
+
+
+thisf2 <- "round2/Round2_final_redacted.csv"
+df2 <- read.csv(thisf2)
+df2 <- df2[order(df2[,2]),]
+#nums2 <- which(sapply(df2, is.integer))
+
+nums2<- c(5, 8, 9, 10, 11, 14, 15, 16, 19, 29, 21, 22, 23, 24, 25, 28, 29, 30, 31, 34, 35, 36, 38, 41, 42, 43, 44, 45, 46, 47, 49, 51, 54, 55, 56, 57, 58, 61, 62, 63, 64, 65, 66, 67, 70, 71, 72, 73, 76, 77, 78, 79, 82, 83, 84, 85, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107)
+
+allcases <- unique(c(df[,2], df2[,2])) #find all respondent codes (a couple from round 2 did not do round 1)
+
+
+
+df12 <- data.frame(matrix(NA, nrow=length(allcases),ncol=(length(nums1)+length(nums2)+6)))
+#build new df with time1 and 2 quantitative only
+
+names(df12)<-c('ID1','ID2','name1','name2','group1','group2',names(df[nums1]),names(df2[nums2]))
+
+range1<-7:(6+length(nums1))
+range2<-(6+length(nums1)+1):(6+length(nums1)+length(nums2))
+
+for (i in 1:length(allcases)){
+  w1<-which(df$X1..unique.personal.code..prepopulated.==allcases[i])
+  w2<-which(df2$id==allcases[i])
+  
+  if(length(w1)>0){
+    df12[i,c(1,3,5)]<- df[w1,c(1,2,91)]
+    df12[i,range1]<-df[w1,nums1]
+  }
+  
+  if(length(w2)>0){
+    df12[i,c(2,4,6)]<- df2[w2,1:3]
+    df12[i,range2]<-df2[w2 ,nums2]
+  }
+}
+
+df12<-df12[,-7] #col7 coded if anaesthestist!
+write.csv(names(df12),'mynames.csv')
+
+table(df12$group1,df12$group2) #some changes in groups!
+
+#This table used to create data dictionary
+```
+
+
+
+
+```
+
+## Summary of FAIRS Survey, round 1
+
+### Personalised report: `r df[thisrow,1]`
+
+This is a report to provide feedback to participants in Round 1 of the FAIRS survey.  For background to the survey, please see the protocol here: <https://osf.io/rycqb/>.  
+
+
+```{r numformat,echo=F}
+#Format numbers so they have same n decimal places, even if zero at end
+#This returns a string
+
+numformat=function(mynum,ndecimals){
+  newnum <- format(round(mynum,ndecimals),nsmall=ndecimals)
+  return(newnum)
+}
+
+```
+```{r gatherfreetext, echo=F}
+#modifications to numbering, so now sequential and randomised. V clunky
+gatherfree <- function(mytext){
+  mytext<-paste0(df$group,") ",mytext)
+   f<-which(nchar(mytext)>8)
+  text<-mytext[f]
+  #randomize
+  myft <- as.data.frame(text)
+  nurows<-sample(1:nrow(myft)) #random row order
+  myft <- as.data.frame(myft[nurows, ]) #make data frame called myft
+  myft <- as.data.frame(myft[order(myft[,1]),]) #order by group 
+  myft[,1]<-paste0(1:nrow(myft),"_",myft[,1]) #add numerical identifier for comment
+
+   #str_replace_all(mytext, "[\r\n]" , ". ")
+names(myft)<-'Free text'
+# knitr::kable(mytext,escape=FALSE)
+  set_flextable_defaults(font.size = 9)
+myft <- flextable(as.data.frame(myft))
+myft <- set_table_properties(myft,layout="autofit")
+myft
+
+}
+
+```
+
+
+
+
+`r signedup` panelists signed up to take part in the survey, and completed surveys were received from `r nrow(df)` of them.  An item was added at the end of the survey, as follows:
+"We anticipate that patterns of responses may be different for those who are primarily involved in raising concerns about serious research misconduct (e.g. sleuths, whistleblowers, victims of research fraud) and those whose job it is to respond to reports of such concerns (e.g. research integrity officers). Could you please specify here which of those groups you identify with most strongly - or whether neither applies to you." The distribution of respondents was as follows: 
+  
+- Sleuths, Whistleblowers, etc (Group 1_S), N = `r length(which(df$group=='1_S'))`   
+- Research Integrity Officers, etc (Group 2_R), N = `r length(which(df$group=='2_R'))`   
+- Others (Group 3_O), N = `r length(which(df$group=='3_O'))`.  
+   
+     
+     
+
+```{r analysepanel,echo=F}
+mypanel<-clean_names(mypanel)
+gtab <- as.data.frame(table(mypanel$gender))
+names(gtab)<-c('Gender','N')
+ctab <- as.data.frame(table(mypanel$which_continent_are_you_based_in))
+names(ctab)<-c('Continent','N')
+rtab <- table(mypanel$reason_for_interest_in_taking_part)
+
+emails<-mypanel$email_address
+nUK <- length(grep(".uk",emails))
+edoms <- str_split(emails,"@")
+edoms <- unlist(edoms)
+edoms <- edoms[seq(2,length(edoms),2)]
+
+countrylist<-vector()
+for (e in 1:length(edoms)){
+g <- as.integer(regexpr("\\.[^\\.]*$", edoms[e])) #position of final 
+ecountry <- substr(edoms[e],(g+1),nchar(edoms[e]))
+countrylist<-c(countrylist,ecountry)
+}
+countrylist<-tolower(countrylist)
+
+```
+
+```{r makemeanstab, echo=F} 
+
+makemeanstab <- function(myjisc,itemnum,df,thisrow){
+  jisccodes <- seq(4,36,2) #X Codes in JISC file corresponding to items
+    itemcode<-paste0('x',jisccodes[itemnum],'_')
+    w<- grep(itemcode,names(df))
+    if(length(w)>1) {w <- w[-1]}
+    
+    sumtab<-data.frame(matrix(NA, nrow=length(w),ncol=5))
+    Ntab <- aggregate(df[,w[1]],by=list(df$group),FUN=length)
+    names(sumtab)[2:4]<-levels(df$group)
+    names(sumtab)[2:4]<-paste0(names(sumtab[2:4])," \n(N = ", Ntab$x,")")
+    names(sumtab)[1]<-'Subitem'
+    names(sumtab)[5]<-"Your response"
+    
+    for (v in 1:length(w)){ #step through all subitems; will make table with all together
+    
+     meantab<- aggregate(df[,w[v]],by=list(df$group),FUN=mean,na.rm=T)
+     sdtab <- aggregate(df[,w[v]],by=list(df$group),FUN=sd,na.rm=T)
+     
+
+     sumtab[v,2]<-paste0(numformat(meantab$x[1],2)," (",numformat(sdtab$x[1],2),")")
+     sumtab[v,3]<-paste0(numformat(meantab$x[2],2)," (",numformat(sdtab$x[2],2),")")
+     sumtab[v,4]<-paste0(numformat(meantab$x[3],2)," (",numformat(sdtab$x[3],2),")")
+     
+     
+    # sumtab[v,4]<-paste0(round(meantab$x[3],2)," (",round(sdtab$x[3],2),")")
+     
+     sumtab[v,1]<-paste0(LETTERS[v],") ",myjisc[itemnum,(7+v)])
+     if(thisrow>0) {sumtab[v,5]<-df[thisrow,w[v]]}
+ 
+    }
+    if(thisrow==0){sumtab <- sumtab[,1:4]} 
+    #Set thisrow to zero if you want means but not an individual response
+  #knitr::kable(sumtab,row.names=FALSE,digits=2)
+      # myft <- flextable(as.data.frame(sumtab))
+      # myft <- set_table_properties(myft,layout="autofit")
+      # myft
+  myft <- flextable(as.data.frame(sumtab))
+myft <- set_table_properties(myft,layout="autofit")
+myft
+}
+```
+
+
+```{r makecattab, echo=F} 
+#tabular output for single option items
+makecattab <- function(myjisc,itemnum,df,thisrow,myterms){
+  jisccodes <- seq(4,36,2) #X Codes in JISC file corresponding to items
+    itemcode<-paste0('x',jisccodes[itemnum],'_')
+    w<- grep(itemcode,names(df))
+    if(length(w)>1) {w <- w[-1]} #for these items, w should already be 1;
+    
+    #now recode items, using the myterms variable
+    
+    thist <-0
+    for (t in 1:length(myterms)){
+      x <- grep(myterms[t],df[,w]) #rows where this term matches
+      df[x,w]<-t
+      if(thisrow %in% x) {thist <-t}
+    }
+    
+    
+    rawtab <- table(df[,w],df$group)
+    sumtab <-as.data.frame.matrix(100*prop.table(rawtab,2))
+    sumtab <- numformat(sumtab,1)
+    Options <- unlist(as.vector(myjisc[itemnum,(7+(1:nrow(sumtab)))]))
+    Options <- paste0(LETTERS[1:nrow(sumtab)],") ",Options)
+    sumtab<-cbind(Options,sumtab)
+    sumtab[thist,1]<-paste("*",sumtab[thist,1])
+    
+
+  
+  myft <- flextable(as.data.frame(sumtab))
+myft <- set_table_properties(myft,layout="autofit")
+myft
+}
+```
+
+```{r percentageagree, echo = FALSE}
+propagree <- function(itemnum,df,cutoff,respmax,thisrow){ 
+
+  jisccodes <- seq(4,36,2) #X Codes in JISC file corresponding to items
+    itemcode<-paste0('x',jisccodes[itemnum],'_')
+    w<- grep(itemcode,names(df))
+    if(length(w)>1) {w <- w[-1]} #for these items, w should already be 1;
+    
+  
+    agreetab<-data.frame(matrix (NA, nrow=length(w),ncol=6))
+    names(agreetab)<-c('Subitem',levels(df$group),'All','Your response')
+    myoptions <- 1:respmax
+      thisbit <- df[,w]
+      
+ 
+    #Check for 5 point scale and collapse extremes, so scale is now 1, 3, 5
+    if(respmax==5){
+      myoptions <-c(1.5,3,4.5)
+      for(v in 1:length(w)){
+        ww<-which(thisbit[,v]==4)
+        thisbit[ww,v] <- 5   
+        ww<-which(thisbit[,v]==2)
+        thisbit[ww,v] <- 1 
+      }
+    }
+   
+    
+    for (v in 1:length(w)){ #stepping through subitems
+      thistab <- table(thisbit[,v],df$group)
+      thistab <- cbind(thistab,table(thisbit[,v])) #last col has All cases
+      ptab <- prop.table(thistab,2) #percentage of each response by group (2nd num indicates col percentage rather than row)
+   
+    agreetab[v,2:5]<-numformat(100*ptab[nrow(ptab),],1)
+    if(itemnum==9 || itemnum==12){
+      agreetab[v,2:5]<-numformat(100*ptab[1,],1) #lowest value for these two items represents agreement
+    }
+    agreetab[v,1]<-paste0(LETTERS[v],") ",myjisc[itemnum,(7+v)])
+    if(thisrow>0){
+      agreetab[v,6]<-df[thisrow,w[v]]
+    }
+    }
+    
+    if(thisrow==0){agreetab<-agreetab[,1:5]} #no column for individual response
+    myft <- flextable(as.data.frame(agreetab))
+    myft <- set_table_properties(myft,layout="autofit")
+    myft
+}
+```
+
+
+The gender distribution was as follows:  
+`r flextable(gtab)|> autofit()`    
+
+\pagebreak
+
+
+The bulk of respondents were from Europe or N America:  
+`r flextable(ctab) |> autofit()`    
+
+<!--- And the distribution of email domains was as follows:  
+`r knitr::kable(table(countrylist))`  --->
+
+For each item, responses are shown by subgroup, where 1 = S(leuths), 2 = R(esearch Integrity Officers) and 3 = O(ther).  For simple multiple choice items, the table shows percentages in each group with a given response.   
+In addition, for items with several subitems, the percentage with agreement/strong agreement is shown for each subitem.  
+
+N.B. Each panel member receives an individualised version of this report that either includes a column showing which response they gave, or has * denoting their selection, depending on the item type. 
+
+## Priorities  
+### Item 1    
+Which of these should be a primary focus for discussion? (1 for low priority, 3 for high priority). 
+<!--Try to avoid selecting the same response for all options, so that we can identify their relative importance.   
+- A. What constitutes serious research misconduct?			 
+- B. How allegations of serious research misconduct are handled			
+- C. Sanctions for serious research misconduct	-->		
+
+<!--`r makemeanstab(myjisc,1,df,thisrow)`-->
+
+As there were only 3 options, no chunking of responses was done for this item: this table shows the percentage selecting a rating of 3. 
+
+
+`r  propagree(1,df,mycutoff,respmax=3,thisrow)`
+
+\pagebreak
+
+**Free text comments on item 1**  
+`r mytext <- df$x5_1b_opt; gatherfree(mytext)`
+
+
+## Burdens of serious research misconduct 
+### Item 2       
+How common is the problem of serious research misconduct? (select one).
+Table shows percentages selecting each option in each group.
+(For personalised reports, * denotes your response).
+
+<!-- - A. Serious research misconduct is rare relative to the amount of published research literature 
+- B. Serious research misconduct is becoming more prevalent and starting to pose a threat to the research literature 
+- C. Serious research misconduct is already common enough to pose a major threat to the research literature -->
+
+`r makecattab(myjisc,2,df,thisrow,c("rare","prevalent","common"))`
+  
+**Agreement**: .  For this item, 78% sleuths endorse response C, whereas far fewer do so in the other groups. 
+
+**Free text comments on item 2**    
+
+`r mytext <- df$x7_2b_opt; gatherfree(mytext)` 
+
+### Item 3    
+How harmful are the impacts of serious research misconduct to different segments of society? Please code as 1 (low harm) to 5 (strong harm)  
+
+
+
+<!-- `r makemeanstab(myjisc,3,df,thisrow)`-->
+
+
+**Agreement**: A 3-point scale was used to compute agreement, with 1-2 collapsed and 4-5 collapsed.   Strongest agreement was achieved for subitem A (research consumers) and subitem B, where harm to other researchers was rated as high by all groups. 
+
+`r  propagree(3,df,mycutoff,respmax=5,thisrow)`  
+<!-- for those on 1-5 scale, can combine outer categories -->
+
+**Free text comments on item 3**    
+
+`r mytext <- df$x9_3b_opt; gatherfree(mytext)` 
+
+## Goals of those responding to serious research misconduct 
+### Item 4    
+In responding to serious research misconduct, several goals may be considered. 
+Please rate how important each of these is, from 1 (unimportant) to 4 (very important) 
+
+<!-- `r makemeanstab(myjisc,4,df,thisrow)`-->
+ 
+**Agreement**: This table shows the percentage giving the highest rating (4).
+ 
+`r  propagree(4,df,mycutoff,respmax=4,thisrow)` 
+ 
+ **Free text comments on item 4**    
+
+`r mytext <- df$x11_4b_op; gatherfree(mytext)` 
+
+## Factors hindering academic institutions' response to serious research misconduct 
+### Item 5   
+Various factors may hinder academic institutions' response to serious research 
+misconduct. Please rate the following from 1 (not much of a hindrance) to 5 (substantial hindrance) 
+
+<!--`r makemeanstab(myjisc,5,df,thisrow)`-->
+ 
+For this item, the percentage agreeing was computed after collapsing the two top categories, 4 and 5. The standout result was the very high endorsement of subitem B by the Sleuths.  
+  
+`r  propagree(5,df,mycutoff,respmax=5,thisrow)` 
+
+**Agreement**: Overall, few items/ groups achieved 80% agreement (when rating scale collapsed to 3 categories), but the high rating of B (institutional COI) and the low rating of F  (vexatious complaints) did achieve 80% agreement among sleuths.
+
+
+ **Free text comments on item 5**    
+
+`r mytext <- df$x13_5b_op; gatherfree(mytext)` 
+
+## Factors driving serious research misconduct 
+### Item 6   
+What is the impact of these factors in encouraging researchers to commit serious research misconduct? 
+Please rate from 1 (little impact) to 5 (large impact) 
+
+
+<!--`r makemeanstab(myjisc,6,df,thisrow)`-->
+
+**Agreement**: Here we again collapse responses 4-5.  There was general agreement that Publish or Perish culture had a large impact, but a clear divide between Groups S and R for subitems A and B. 
+
+\pagebreak
+
+
+`r  propagree(6,df,mycutoff,respmax=5,thisrow)` 
+
+ **Free text comments on item 6**    
+
+`r mytext <- df$x15_6b_op; gatherfree(mytext)` 
+
+## Role of social media   
+### Item 7  
+On balance, the role of social media in detecting and reporting serious research 
+misconduct has been (select one).  
+Table shows percentages selecting each option in each group.  
+(For personalised reports, * denotes your response).
+<!-- - A. 	predominantly negative - it makes it too easy for vexatious individuals to raise unwarranted complaints, often under the guise of anonymity   
+- B. neither positive nor negative on balance   
+- C. positive - it provides a route for speedy commentary when concerns are discovered   -->
+
+`r makecattab(myjisc,7,df,thisrow,c('predominantly','neither','speedy'))`
+
+
+**Agreement**: No option reached the criterion of 80% agreement, but there was a striking pattern of difference between group S and others, with only group S being largely positive.   
+
+ **Free text comments on item 7**    
+
+`r mytext <- df$x17_7b_op; gatherfree(mytext)` 
+
+
+## Reporting serious research misconduct   
+### Item 8   
+Official channels for reporting misconduct are often slow and obstructive (select one option).   
+Table shows percentages selecting each option in each group.  
+(For personalised reports, * denotes your response).
+
+`r makecattab(myjisc,8,df,thisrow,c('Strongly agree','Moderately agree','Neither agree nor disagree','Moderately disagree','Strongly disagree'))`
+
+**Agreement**:  For all groups, the overall trend is to endorse this statement, but support is markedly stronger for Sleuths.  If we collapse A+B, then, sleuths have 97% agreement. 
+
+
+
+ **Free text comments on item 8**    
+
+`r mytext <- df$x19_8b_op; gatherfree(mytext)` 
+
+## Models for addressing serious research misconduct 
+### Item 9  
+In an ideal world where resources are not an issue, which is the most suitable model/system for addressing serious research misconduct? 
+
+<!-- - A. Self-regulation approach, where academic institutions are responsible for conducting investigations and 
+determining sanctions when one of their staff is accused   
+- B. National governance approach, where government regulatory agency is set up for this purpose   
+- C. National guidelines approach; for example, UK's Committee for Research Integrity, which does not have a 
+regulatory role, but aims to ensure all institutions work to a common framework   
+- D. Regulatory agency independent of Government  
+
+NB!! 1 is most preferred, so need to recode
+-->
+
+
+<!--`r makemeanstab(myjisc,9,df,thisrow)`  -->
+
+**Agreement**: There was no agreement on this item by any group - all options had some support. N.B. This was an item where respondents were asked to rank responses, with 1 being the most preferred.  This table shows the percentage of respondents giving a ranking of 1. 
+
+`r  propagree(9,df,mycutoff,respmax=4,thisrow)` 
+
+
+ **Free text comments on item 9**    
+
+`r mytext <- df$x21_9b_op; gatherfree(mytext)` 
+
+## Role of employers
+### Item 10  
+Prospective employers should undertake rigorous due diligence and, as far as
+possible, check with previous employers to ask if there have been any investigations into serious research misconduct.  
+<!-- - A. Agree
+- B. Neutral
+- C. Disagree
+-->
+Table shows percentages selecting each option in each group.  
+(For personalised reports, * denotes your response).  
+
+`r makecattab(myjisc,10,df,thisrow,c('Agree','Neutral','Disagree'))`
+
+**Agreement**: Endorsement of  'agree' was relatively high for all groups, but exceeded 80% only for group O.  
+
+
+ **Free text comments on item 10**    
+
+`r mytext <- df$x23_10b_o; gatherfree(mytext)` 
+
+### Item 11  
+Employers, funders and publishers of research should be legally required to share information to support investigations of serious research misconduct.  
+Table shows percentage selecting each option.  
+(For personalised reports, * denotes your response).  
+
+`r makecattab(myjisc,11,df,thisrow,c('Agree','Neutral','Disagree'))`
+
+**Agreement**: Pattern of responding was similar to item 10: general agreement with the statement, but less than 80% for groups S and R.
+
+ **Free text comments on item 11**    
+
+`r mytext <- df$x25_11b_o; gatherfree(mytext)` 
+
+## Solutions to serious research misconduct
+### Item 12  
+Given that we have finite resources, which solutions to serious research misconduct should be prioritised in funding?
+Rate the following options from 1 = most preferred, to 5 = least preferred 
+<!--
+- A. Changing criteria for hiring/promotion/funding away from publish/perish model, so that researchers won't be motivated to commit fraud  
+- B. Research ethics training for all researchers  
+- C. Funding/training of research integrity officers  
+- D. Infrastructure to collect and report on serious research misconduct nationally  
+- E. Support for individuals/organisations who have expertise in detection of serious research misconduct  
+-->
+
+<!--`r makemeanstab(myjisc,12,df,thisrow)`-->
+
+ **Agreement**: No item/group combination exceeded 80% agreement (with data collapsed to a 3-point scale). This table shows percentage rating 1-2 (i.e. most preferred).
+`r  propagree(12,df,mycutoff,respmax=5,thisrow)` 
+
+
+
+ **Free text comments on item 12**    
+
+`r mytext <- df$x27_12b_o; gatherfree(mytext)` 
+
+## Role of publishers  
+### Item 13 
+It is not the responsibility of publishers or journal editors to determine whether serious research misconduct has occurred, but they are responsible for ensuring the literature is decontaminated from erroneous work promptly. Please rate the following statements in accordance with your views on how this should work, from 1 = strongly disagree to 5 = strongly agree. 
+
+<!-- - A. Articles that contain serious errors that undermine confidence in the findings should be retracted promptly, without waiting for an institutional investigation  
+- B. Publishers and institutions should work together to facilitate sharing of key information when serious research misconduct is suspected  
+- C. If conditions for retraction are not met, an expression of concern may be added to an article while an institution conducts an investigation  
+- D. When an institutional investigation is completed, the institution should directly approach the publisher of articles affected by severe research misconduct and request retraction  
+- E. When a publisher finds the same author repeatedly flagged for erroneous material, they should communicate this to research integrity officer at the author's institution  
+- F. When a publisher or institution finds the same researcher repeatedly flagged for erroneous material, their name should be added to a database. (NB. If there is sufficient endorsement of this statement, there would need to be discussion of how this works in terms of legal, practical and ethical aspects.)  
+-->
+
+<!--`r makemeanstab(myjisc,13,df,thisrow)`-->
+  
+  
+
+
+**Agreement**: Some options re publishers got 80% agreement across all groups
+Notably: 
+-B: Publishers and Institutions work together  
+-D: Institution approach publisher when investigation finds severe res misconduct  
+-E: Publisher tells institution re author with repeated erroneous material  
+
+In addition, 80% of Group S agreed with A, re need for prompt retraction if serious errors that undermine confidence.  Much less agreement for that from Group R. 
+
+`r  propagree(13,df,mycutoff,respmax=5,thisrow)` 
+
+ **Free text comments on item 13**    
+
+`r mytext <- df$x29_13b_o; gatherfree(mytext)`
+
+## Whistleblowers and bystanders  
+### Item 14  
+Please rate your agreement with the following statements about whistleblowers from 1 = strongly disagree to 5 = strongly agree  
+<!-- 
+- A. There are disincentives for researchers to report serious research misconduct					
+- B. Usually there is insufficient protection for whistleblowers who report serious research misconduct					
+- C. It is important to be aware of and mitigate collateral damage that may be caused to other members of a research group if one member is found to have committed serious research misconduct					
+- D. Whistleblowers should have their identities protected, with confidential channels for reporting suspected serious research misconduct					
+-->
+
+<!--`r makemeanstab(myjisc,14,df,thisrow)`-->
+
+**Agreement**: Responses veered in the general direction of agreement for all these subitems.  80% agreement achieved by Sleuths regarding disincentives to report serious research misconduct.  The Other group has 80% agreement on collateral damage concerns and whistleblower identity protection.
+
+`r  propagree(14,df,mycutoff,respmax=5,thisrow)` 
+
+ **Free text comments on item 14**    
+
+`r mytext <- df$x31_14b_o; gatherfree(mytext)`
+
+## When serious research misconduct is confirmed  
+### Item 15  
+Which of these practices should be options for institutions when serious research misconduct is confirmed.
+Please give your rating from 1 = strongly disagree to 5 = strongly agree.
+
+<!--  
+- A. Educational retraining for researchers who have been found to commit serious research misconduct  
+- B. Restorative justice approaches; e.g. requirement to meet those affected by the misconduct to discuss its impact  
+- C. Sanctions such as demotion or dismissal  
+- D. Report on the investigation made public, with identities of those found to have committed serious research misconduct disclosed  
+-->
+
+<!--`r makemeanstab(myjisc,15,df,thisrow)`-->
+
+**Agreement**: Group S is keener on what may be seen as the more negative consequences for severe research misconduct; 80% endorsement for C and D (collapsed to 3 point scale).  They are less keen on options A and B - but there's less agreement from all groups on those options.
+
+`r  propagree(15,df,mycutoff,respmax=5,thisrow)` 
+
+ **Free text comments on item 15**    
+
+`r mytext <- df$x33_15b_o; gatherfree(mytext)`
+
+## Unintended consequences/barriers to progress  
+### Item 16  
+Please rate your agreement with the following statements about unintended consequences/barriers to progress from 1 = strongly disagree to 5 = strongly agree  
+<!--
+- A. Fear of reputational harm makes institutions less likely to take action on serious research misconduct
+- B. Investigations of serious research misconduct divert researchers and associated resources from more productive research work
+- C. There is a danger that structures developed to investigate serious research misconduct could be weaponised by those with political agendas - e.g. on topics such as vaccination, climate change, sexual health.
+- D. Failure to address serious research misconduct at the institutional/employer level could lead to more bureaucracy from external agencies
+-->
+
+<!--`r makemeanstab(myjisc,16,df,thisrow)`-->
+**Agreement**.  The percentages rating agree/strongly agree to subitem A are markedly higher for Group S than for other groups. 
+
+`r  propagree(16,df,mycutoff,respmax=5,thisrow)` 
+
+ **Free text comments on item 16**    
+
+`r mytext <- df$x35_16b_o; gatherfree(mytext)`
+
+### Item 17  
+"One of the likely drivers of trust and distrust in research is the way research institutes, publishers, and funders respond to allegations of research misconduct" (Bouter, 2024)   
+
+Table shows percentages selecting each option in each group.  
+(For personalised reports, * denotes your response).  
+
+`r makecattab(myjisc,17,df,thisrow,c('Agree','Neutral','Disagree'))`
+
+*Agreement*: This item did not divide the groups, but it also did not achieve 80% agreement.
+
+
+ **Free text comments on item 17**    
+
+`r mytext <- df$x37_17b_o; gatherfree(mytext)`
+
+\pagebreak
+
+## Final thoughts   
+**Free text comments: final thoughts**  
+`r mytext <- df$x39_any_oth; gatherfree(mytext)`  
+
+

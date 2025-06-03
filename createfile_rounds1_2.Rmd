@@ -11,7 +11,7 @@ output:
 <!---  Numerical data only, no free text comments -->
 
 
-```{r setup, include=FALSE}
+```{r setup, include=FALSE, echo=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 require(tidyverse)
 require(viridis)
@@ -40,7 +40,7 @@ df <- read.csv('FAIRS_Rounds1_2.csv')
 
 ```
 
-```{r orderedfactors}
+```{r orderedfactors, echo=FALSE}
 #make ordered factors for mult choice items
 ordfac <- function(df,colnum,myorder){
   uniques <- unique(df[,colnum])
@@ -68,7 +68,14 @@ df[,5]<-factor(df[,5])
 df[,6]<-factor(df[,6])
 ```
 
-
+```{r recodeitem9_12}
+#Item 9 was rank ordered in round 1, with 1 as first choice. But this confused respondents, and for compatibility with scoring, it is reversed here.
+#Item 12 had a similar issue - and it was rather ambiguous as to whether respondents should rank order or rate.
+ w<-which(grepl('1_item9',names(df))==TRUE)
+df[,w]<-5-df[,w]
+ w<-which(grepl('1_item12',names(df))==TRUE)
+df[,w]<-6-df[,w]
+```
 ## Summary of FAIRS Survey, rounds 1 and 2
 
 For background to the survey, please see the protocol here: <https://osf.io/rycqb/>.  
@@ -133,12 +140,8 @@ makemc <- function(df,w,groupcol,mycaption){
   sumtab <- numformat(sumtab,1)
   sumtab<-cbind(row.names(sumtab),sumtab)
   names(sumtab) <- c('Multiple choice option','S','R','O','All')
-  myft <- flextable(as.data.frame(sumtab))
-  
-  myft <- addhighlight(myft)
-  myft <- set_caption(myft, mycaption)
-  myft <- set_table_properties(myft,layout="autofit")
-  myft
+
+  return(sumtab)
 }
 ```
 
@@ -184,314 +187,206 @@ propagree <- function(df,col1,col2, maxval,groupcol, mycaption){
   
     }
 
-    myft <- flextable(as.data.frame(agreetab))
-    myft <- set_caption(myft, mycaption)
-    myft <- addhighlight(myft) 
- 
-    myft <- set_table_properties(myft,layout="autofit")
-    return(myft)
+    return(agreetab)
 }
 ```
 
 
 
-```{r allitems}
-for (i in 2:17){
-  for (r in 1:2){
+```{r allitems, echo=F}
 
+#FOR REASONS BEYOND MY COMPREHENSION THIS WON'T WORK IN A LOOP. NO OUTPUT.
+#SO HAVE TO CALL IT ITEM BY ITEM
+maketable<-function(df,i,r){
   thisbit<-paste0(r,"_item",i)
   thiscaption<-paste0("Round ",r,": Item ",i)
    w<-which(grepl(thisbit,names(df))==TRUE)
    if(length(w)==1){  
- myft<-makemc(df,w,groupcol=6,thiscaption)
+   mytab<-makemc(df,w,groupcol=6,thiscaption)
    }
    if(length(w)>1){
     col1=min(w)
     col2=max(w)
-    myft<-propagree(df,col1,col2, maxval = length(w),groupcol=6,thiscaption)
+    mytab<-propagree(df,col1,col2, maxval = length(w),groupcol=6,thiscaption)
    }
-myft
-  }
+    myft <- flextable(as.data.frame(mytab))
+    myft <- set_caption(myft, thiscaption)
+    myft <- addhighlight(myft) 
+ 
+    myft <- set_table_properties(myft,layout="autofit")
+    myft
+return(myft)
 }
 ```
 
+# Burdens of serious research misconduct  
+## ITEM 2  
+Round 1 and 2: How common is the problem of serious research misconduct? (select one) *
 
+`r myft<-maketable(df,2,1)`
+`r myft`
+`r myft<-maketable(df,2,2)`
+`r myft`
 
+## ITEM 3
+Round 1 and 2: How harmful are the impacts of serious research misconduct to different segments of society? Please code as 1 (low harm) to 5 (strong harm) 
+`r myft<-maketable(df,3,1)`
+`r myft`
+`r myft<-maketable(df,3,2)`
+`r myft`
 
+## Goals of those responding to serious research misconduct  
 
-
-
-## Burdens of serious research misconduct 
-### Item 2       
-How common is the problem of serious research misconduct? (select one).
-Table shows percentages selecting each option in each group.
-(For personalised reports, * denotes your response).
-
-```{r item2}
-#we use the time 2 categorisation of group for both tables
-makemc(df,w=10,groupcol=6,"Round 1: Item 2")
-makemc(df,w=65,groupcol=6, "Round 2: Item 2")
-Tabla <- table(df$X1_item2, df$X2_item2)
-Kendall2 <- KendallTauB(Tabla, conf.level=0.95)
-
-```
-
-### Item 3    
-How harmful are the impacts of serious research misconduct to different segments of society? Please code as 1 (low harm) to 5 (strong harm)  
-
-
-
-```{r item3, echo=F}
-
-propagree(df,col1=11,col2=15, maxval = 5,groupcol=6,"Round 1: Item 3")
-propagree(df,col1=66,col2=69, maxval = 5,groupcol=6,"Round 2: Item 3")
-```
-
-
-## Goals of those responding to serious research misconduct 
-### Item 4    
-In responding to serious research misconduct, several goals may be considered. 
+## ITEM 4
+Round 1: In responding to serious research misconduct, several goals may be considered.
 Please rate how important each of these is, from 1 (unimportant) to 4 (very important) 
+`r myft<-maketable(df,4,1)`
+`r myft`
+Round 2: In responding to serious research misconduct, several goals may be considered.
+Please rate how important each of these is, from 1 (unimportant) to 5 (very important)
 
-```{r item4, echo=F}
+`r myft<-maketable(df,4,2)`
+`r myft`
 
-#propagree(df,col1=16,col2=19, maxval = 4,groupcol=6,"Round 1: Item 4")
-#This one looks wrong - had 4 pt scale - was it reverse coded?  Need to check
+# Factors hindering academic institutions' response to serious research misconduct  
+## ITEM 5
+Rounds 1 and 2: Various factors may hinder academic institutions' response to serious research
+misconduct. Please rate the following from 1 (not much of a hindrance) to 5 (substantial hindrance)
 
-propagree(df,col1=70,col2=72, maxval = 5,groupcol=6,"Round 2: Item 4")
-```
+`r myft<-maketable(df,5,1)`
+`r myft`
+`r myft<-maketable(df,5,2)`
+`r myft`
 
-## Factors hindering academic institutions' response to serious research misconduct 
-### Item 5   
-Various factors may hinder academic institutions' response to serious research 
-misconduct. Please rate the following from 1 (not much of a hindrance) to 5 (substantial hindrance) 
+# Factors driving serious research misconduct
+## ITEM 6
 
-
+ What is the impact of these factors in encouraging researchers to commit serious research misconduct? Please rate from 1 (little impact) to 5 (large impact).
  
-For this item, the percentage agreeing was computed after collapsing the two top categories, 4 and 5. The standout result was the very high endorsement of subitem B by the Sleuths.  
- 
-```{r item5} 
+ `r myft<-maketable(df,6,1)`
+`r myft`
+`r myft<-maketable(df,6,2)`
+`r myft`  
+
+# Role of post-publication peer review  
+## ITEM 7  
+Round 1: On balance, the role of social media in detecting and reporting serious research misconduct has been: (select one) 
+ `r myft<-maketable(df,7,1)`
+`r myft`
+
+Round 2: Please rate the impact of the following from 1 = strongly negative to 5 = strongly positive in drawing attention to serious academic misconduct
+
+ `r myft<-maketable(df,7,2)`
+`r myft`
+
+# Reporting serious research misconduct
+## ITEM 8
+Round 1: Official channels for reporting misconduct are often slow and obstructive (select one option) 
+ `r myft<-maketable(df,8,1)`
+`r myft`
+
+Round 2:  Official channels for reporting misconduct seldom work efficiently 
+ `r myft<-maketable(df,8,2)`
+`r myft`
 
-propagree(df,col1=21,col2=28, maxval = 5,groupcol=6,"Round 1: Item 5")
-propagree(df,col1=73,col2=79, maxval = 5,groupcol=6,"Round 2: Item 5")
-```
+# Models for addressing serious research misconduct  
+## ITEM 9
 
+Round 1: Rank these in order from 1 = most preferred, to 4 = least preferred.  
+N.B. Several respondents noted this was confusing, because when RANKING options, 1 was regarded as most preferred, whereas elsewhere a high rating corresponded to positive preference. This item was recoded prior to analysis (see above), so the percentages in the Table show those ranking 1. The format was changed in Round 2.
+ `r myft<-maketable(df,9,1)`
+`r myft`
 
+Round 2: In an ideal world where resources are not an issue, which is the most suitable model/system for addressing serious research misconduct?
+Rate these options where 1 = least preferred and 5 = most preferred.  
+Note that additional options were added in Round 2, based on responses to Round 1.
+(Despite the change in wording, at least one respondent thought they were being asked to rank order the options, rather than rate them). 
 
-## Factors driving serious research misconduct 
-### Item 6   
-What is the impact of these factors in encouraging researchers to commit serious research misconduct? 
-Please rate from 1 (little impact) to 5 (large impact) 
+ `r myft<-maketable(df,9,2)`
+`r myft`
 
- 
-```{r item6}
-w<-which(grepl('1_item6',names(df))==TRUE)
-col1<-min(w)
-col2=max(w)
-propagree(df,col1,col2, maxval = 5,groupcol=6,"Round 1: Item 6")
-w<-which(grepl('2_item6',names(df))==TRUE)
-col1<-min(w)
-col2=max(w)
+# Role of employers
+## Item 10
+Rounds 1 and 2: Prospective employers should undertake rigorous due diligence and, as far as possible, check with previous employers to ask if there have been any investigations into serious research misconduct (multiple choice options). The Agree option was split in Round 2 on the basis of comments from Round 1.
 
-propagree(df,col1,col2, maxval = 5,groupcol=6,"Round 2: Item 6")
+ `r myft<-maketable(df,10,1)`
+`r myft`
+ `r myft<-maketable(df,10,2)`
+`r myft`
 
-```
+# Legal obligations of employers
+## Item 11
+Rounds 1 and 2: Employers, funders and publishers of research should be legally required to share information to support investigations of serious research misconduct.  (3 point scale for Round 1 changed to 5 point scale for Round 2, for consistency with other ratings).
 
+ `r myft<-maketable(df,11,1)`
+`r myft`
+ `r myft<-maketable(df,11,2)`
+`r myft`
 
-## Role of social media   
-### Item 7  
-On balance, the role of social media in detecting and reporting serious research 
-misconduct has been (select one).  
-Table shows percentages selecting each option in each group.  
+# Solutions to serious research misconduct
+## ITEM 12
+Rounds 1 and 2: Given that we have finite resources, which solutions to serious research misconduct should be prioritised in funding? In Round 1, the options were worded as 1 = most preferred, to 5 = least preferred, whereas in Round 2, they were 1 = totally ineffective to 5 = highly effective. With hindsight this was very confusing, and respondents in Round 1 may have interpreted this as a request to rank order the options. As noted above, the Round 1 scores are rescaled so that the table shows those rating the option as 1 or 2. 
 
-```{r item7}
+ `r myft<-maketable(df,12,1)`
+`r myft`
+ `r myft<-maketable(df,12,2)`
+`r myft`
 
-w<-which(grepl('1_item7',names(df))==TRUE)
-makemc(df,w,groupcol=6,"Round 1: Item 7")
-w<-which(grepl('2_item7',names(df))==TRUE)
-col1=min(w)
-col2=max(w)
-propagree(df,col1,col2, maxval = 5,groupcol=6,"Round 2: Item 7")
+# Role of publishers
+# ITEM 13. 
+Round 1: It is not the responsibility of publishers or journal editors to determine whether serious research misconduct has occurred, but they are responsible for ensuring the literature is decontaminated from erroneous work promptly. Please rate the following statements in accordance with your views on how this should work, from 1 = strongly disagree to 5 = strongly agree. 
+ `r myft<-maketable(df,13,1)`
+`r myft`
 
+For Round 2, the wording was modified because some respondents objected to the premise of the first sentence.  Accordingly, this statement was incorporated as another subitem.  However, that proved to be a poor decision, as it involved rating a negatively worded item, which can be confusing. 
+The revised wording for the item was: Publishers and their journal editors are responsible for ensuring the literature is decontaminated from erroneous work promptly. Please rate the following statements in accordance with your views on how this should work, from 1 = strongly disagree to 5 = strongly agree.  
 
-```
+`r myft<-maketable(df,13,2)`
+`r myft`
 
- 
+# Whistleblowers and bystanders
+## ITEM 14
+Rounds 1 and 2: Please rate your agreement with the following statements about whistleblowers from 1 = strongly disagree to 5 = strongly agree. The last two subitems were reordered in Round 2, as the 'collateral damage' issue seemed separate from the other issues. 
 
+`r myft<-maketable(df,14,1)`
+`r myft`
+`r myft<-maketable(df,14,2)`
+`r myft`
 
-## Reporting serious research misconduct   
-### Item 8   
-Official channels for reporting misconduct are often slow and obstructive (select one option).   
-Table shows percentages selecting each option in each group.  
-(For personalised reports, * denotes your response).
+# When serious research misconduct is confirmed  
+## ITEM 15
+Rounds 1 and 2: Which of these practices should be options for institutions when serious research misconduct is confirmed.
+Please give your rating from 1 = strongly disagree to 5 = strongly agree
 
-```{r item8}
-w<-which(grepl('1_item8',names(df))==TRUE)
-#makemc(df,w,groupcol=6,"Round 1: Item 8")
-propagree(df,w,w, maxval = 5,groupcol=6,"Round 1: Item 8")
+`r myft<-maketable(df,15,1)`
+`r myft`
+`r myft<-maketable(df,15,2)`
+`r myft`
 
-w<-which(grepl('2_item8',names(df))==TRUE)
-#makemc(df,w,groupcol=6,"Round 2: Item 8")
-propagree(df,w,w, maxval = 5,groupcol=6,"Round 2: Item 8")
-```
+# Unintended consequences/barriers to progress
+## ITEM 16
+Rounds 1 and 2: Please rate your agreement with the following statements about unintended consequences/barriers to progress from 1 = strongly disagree to 5 = strongly agree.  In Round 2, an explanation was added in response to a comment on Round 1, stating "This question is about what you perceive as the current state of affairs."
 
-## Models for addressing serious research misconduct 
-### Item 9  
-In an ideal world where resources are not an issue, which is the most suitable model/system for addressing serious research misconduct? 
+`r myft<-maketable(df,16,1)`
+`r myft`
+`r myft<-maketable(df,16,2)`
+`r myft`
 
-```{r item9, echo = F}
-w<-which(grepl('1_item9',names(df))==TRUE)
-col1=min(w)
-col2=max(w)
+# Final item
+## ITEM 17
+Round 1: "One of the likely drivers of trust and distrust in research is the way research institutes, publishers, and funders respond to allegations of research misconduct" (Bouter, 2024). This item was intended to get a final overall impression of the key issues in the field. 
+`r myft<-maketable(df,17,1)`
+`r myft` 
 
-propagree(df,col1,col2, maxval = 5,groupcol=6,"Round 1: Item 9 - CHECK RANKED")
+Round 2: To conclude the survey, respondents were invited to express their interest in a range of possible topics for discussion, i.e. How interested would you be in having discussion of the following topics at the in-person meeting in April?  Rate from 1 = not at all interested to 5 strongly interested.  
 
-w<-which(grepl('2_item9',names(df))==TRUE)
-col1=min(w)
-col2=max(w)
-propagree(df,col1,col2, maxval = 5,groupcol=6,"Round 2: Item 9")
-```
+`r myft<-maketable(df,17,2)`
+`r myft` 
 
 
 
-## Role of employers
-### Item 10  
-Prospective employers should undertake rigorous due diligence and, as far as
-possible, check with previous employers to ask if there have been any investigations into serious research misconduct.  
 
 
-```{r item10, echo=FALSE}
-w<-which(grepl('1_item10',names(df))==TRUE)
-makemc(df,w,groupcol=6,"Round 1: Item 10")
-w<-which(grepl('2_item10',names(df))==TRUE)
-makemc(df,w,groupcol=6, "Round 2: Item 10")
 
-```
 
-### Item 11  
-Employers, funders and publishers of research should be legally required to share information to support investigations of serious research misconduct.  
-
-
-```{r item11, echo=FALSE}
-w<-which(grepl('1_item11',names(df))==TRUE)
-makemc(df,w,groupcol=6,"Round 1: Item 11")
-w<-which(grepl('2_item11',names(df))==TRUE)
-makemc(df,w,groupcol=6, "Round 2: Item 11")
-
-``` 
-
-## Solutions to serious research misconduct
-### Item 12  
-Given that we have finite resources, which solutions to serious research misconduct should be prioritised in funding?
-Rate the following options from 1 = most preferred, to 5 = least preferred 
-
-```{r item12, echo=F}
-
-w<-which(grepl('1_item12',names(df))==TRUE)
-col1=min(w)
-col2=max(w)
-propagree(df,col1,col2, maxval = 5,groupcol=6,"Round 1: Item 12 - CHECK RANKING?")
-w<-which(grepl('2_item12',names(df))==TRUE)
-col1=min(w)
-col2=max(w)
-propagree(df,col1,col2, maxval = 5,groupcol=6,"Round 2: Item 12")
-
-
-```
-
-## Role of publishers  
-### Item 13 
-It is not the responsibility of publishers or journal editors to determine whether serious research misconduct has occurred, but they are responsible for ensuring the literature is decontaminated from erroneous work promptly. 
-
-```{r item13, echo=F}
-
-w<-which(grepl('1_item13',names(df))==TRUE)
-col1=min(w)
-col2=max(w)
-propagree(df,col1,col2, maxval = 5,groupcol=6,"Round 1: Item 13")
-w<-which(grepl('2_item13',names(df))==TRUE)
-col1=min(w)
-col2=max(w)
-propagree(df,col1,col2, maxval = 5,groupcol=6,"Round 2: Item 13")
-
-
-```
-
-## Whistleblowers and bystanders  
-### Item 14  
-Please rate your agreement with the following statements about whistleblowers from 1 = strongly disagree to 5 = strongly agree  
-
-```{r item14, echo=F}
-
-w<-which(grepl('1_item14',names(df))==TRUE)
-col1=min(w)
-col2=max(w)
-propagree(df,col1,col2, maxval = 5,groupcol=6,"Round 1: Item 14")
-w<-which(grepl('2_item14',names(df))==TRUE)
-col1=min(w)
-col2=max(w)
-propagree(df,col1,col2, maxval = 5,groupcol=6,"Round 2: Item 14")
-
-
-```
-
-## When serious research misconduct is confirmed  
-### Item 15  
-Which of these practices should be options for institutions when serious research misconduct is confirmed.
-Please give your rating from 1 = strongly disagree to 5 = strongly agree.
-
-
-```{r item15, echo=F}
-
-w<-which(grepl('1_item15',names(df))==TRUE)
-col1=min(w)
-col2=max(w)
-propagree(df,col1,col2, maxval = 5,groupcol=6,"Round 1: Item 15")
-w<-which(grepl('2_item15',names(df))==TRUE)
-col1=min(w)
-col2=max(w)
-propagree(df,col1,col2, maxval = 5,groupcol=6,"Round 2: Item 15")
-
-```
-
-## Unintended consequences/barriers to progress  
-### Item 16  
-Please rate your agreement with the following statements about unintended consequences/barriers to progress from 1 = strongly disagree to 5 = strongly agree  
-
-```{r item16, echo=F}
-
-w<-which(grepl('1_item16',names(df))==TRUE)
-col1=min(w)
-col2=max(w)
-propagree(df,col1,col2, maxval = 5,groupcol=6,"Round 1: Item 16")
-w<-which(grepl('2_item16',names(df))==TRUE)
-col1=min(w)
-col2=max(w)
-propagree(df,col1,col2, maxval = 5,groupcol=6,"Round 2: Item 16")
-
-```
-
-### Item 17  
-"One of the likely drivers of trust and distrust in research is the way research institutes, publishers, and funders respond to allegations of research misconduct" (Bouter, 2024)   
-
-### Item 11  
-Employers, funders and publishers of research should be legally required to share information to support investigations of serious research misconduct.  
-
-
-```{r item17, echo=FALSE}
-w<-which(grepl('1_item17',names(df))==TRUE)
-makemc(df,w,groupcol=6,"Round 1: Item 17")
-
-w<-which(grepl('2_item17',names(df))==TRUE)
-col1=min(w)
-col2=max(w)
-propagree(df,col1,col2, maxval = 5,groupcol=6,"Round 2: Item 17")
-
-``` 
-
-
-
-
-
-the end
 
